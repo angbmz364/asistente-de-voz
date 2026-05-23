@@ -1,0 +1,138 @@
+@import 'tailwindcss';
+
+@keyframes assistantPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.28), 0 0 60px rgba(59, 130, 246, 0.35);
+  }
+
+  50% {
+    transform: scale(1.03);
+    box-shadow: 0 0 0 14px rgba(34, 211, 238, 0.08), 0 0 80px rgba(59, 130, 246, 0.55);
+  }
+}
+
+@keyframes assistantWave {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.35;
+  }
+
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+body {
+  @apply flex h-screen w-screen items-center justify-center overflow-hidden bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.18),transparent_25%),linear-gradient(135deg,#020617,#0f172a_45%,#111827)] text-white;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.12), transparent 18%), radial-gradient(circle at 80% 20%, rgba(168, 85, 247, 0.13), transparent 18%), radial-gradient(circle at 50% 80%, rgba(34, 211, 238, 0.1), transparent 22%);
+  pointer-events: none;
+}
+
+.control-button {
+  @apply opacity-60 p-4 rounded-full bg-neutral-600 shadow-xl box-content;
+}
+
+#root {
+  display: grid;
+  place-items: center;
+  margin-top: 5rem;
+}
+
+.controls_container {
+  display: flex;
+  justify-content: space-between;
+  padding: 3rem 0;
+  text-align: center;
+  gap: 2rem;
+}
+
+.flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.control-button {
+  transition-property: transform, background;
+  transition-duration: 0.15s;
+  transition-timing-function: ease-in-out;
+}
+
+.listening {
+  transform: scale(1.1);
+  background: #f00;
+  @apply shadow-red-500/30 shadow-lg
+}
+
+.cancel:active {
+  transform: scale(0.95);
+}
+
+.assistant-shell {
+  @apply relative flex flex-col items-center justify-center gap-5 py-4;
+}
+
+.assistant-orb {
+  @apply relative flex size-44 items-center justify-center rounded-full border border-white/10 bg-linear-to-br from-cyan-300 via-blue-500 to-fuchsia-500 shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_24px_90px_rgba(59,130,246,0.45)] transition-transform duration-300;
+}
+
+.assistant-orb-speaking {
+  animation: assistantPulse 1.4s ease-in-out infinite;
+}
+
+.assistant-glow {
+  @apply absolute inset-3 rounded-full bg-white/10 blur-xl;
+}
+
+.assistant-inner {
+  @apply relative z-10 flex size-28 items-center justify-center rounded-full border border-white/20 bg-slate-950/80 backdrop-blur-md;
+}
+
+.assistant-ring {
+  @apply absolute inset-0 rounded-full border border-white/20;
+}
+
+.assistant-icon {
+  @apply text-3xl text-cyan-100 drop-shadow-[0_0_12px_rgba(34,211,238,0.5)];
+}
+
+.assistant-status-card {
+  @apply rounded-2xl border border-white/10 bg-white/5 px-6 py-3 text-center backdrop-blur-md;
+}
+
+.assistant-status-title {
+  @apply text-sm font-semibold text-white;
+}
+
+.assistant-status-copy {
+  @apply mt-1 text-xs text-neutral-300;
+}
+
+.assistant-wave {
+  @apply absolute rounded-full border border-cyan-200/35;
+  animation: assistantWave 1.8s ease-out infinite;
+}
+
+.assistant-wave-one {
+  inset: -10px;
+  animation-delay: 0s;
+}
+
+.assistant-wave-two {
+  inset: -22px;
+  animation-delay: 0.2s;
+}
+
+.assistant-wave-three {
+  inset: -34px;
+  animation-delay: 0.4s;
+}
