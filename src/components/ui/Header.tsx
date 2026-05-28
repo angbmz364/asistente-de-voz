@@ -12,7 +12,7 @@ const Header = () => {
 
   return (
     <nav className={`fixed top-0 py-4 px-24 flex justify-between items-center w-screen border-b backdrop-blur-2xl border-neutral-700 transition-transform duration-300 ${translateClass}`}>
-      <a className="opacity-50 transition-opacity hover:opacity-90 duration-200" href="https://sask.dev" target="_blank" >Creado por Ángel</a>
+      <a className="opacity-50 transition-opacity hover:opacity-90 duration-200" href="https://sask.dev" target="_blank" >Hecho por el grupo de Puca</a>
       <a 
         className="inline-flex items-center gap-2 opacity-50 transition-opacity hover:opacity-90 duration-200" 
         href="https://gemini.google.com/app"
