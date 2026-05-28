@@ -2,7 +2,7 @@ import { getHour, user } from '../../utils'
 
 const Greeting = () => {
   return (
-    <div className="text-center mt-10">
+    <div className="text-center mt-10 select-none">
       <h1 className="text-3xl font-semibold text-white">
         {getHour()}, {user}
       </h1>

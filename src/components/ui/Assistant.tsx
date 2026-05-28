@@ -22,7 +22,7 @@ const Assistant = () => {
   }, [])
 
   return (
-    <div className="assistant-shell">
+    <div className="assistant-shell select-none">
       <div className={`assistant-orb ${isSpeaking ? "assistant-orb-speaking" : ""}`}>
         <div className="assistant-glow" />
         <div className="assistant-inner">

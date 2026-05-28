@@ -25,7 +25,7 @@ const Controls = () => {
   }, [handleKeyDown, isListening]);
 
   return (
-    <div className="controls_container">
+    <div className="controls_container *:cursor-pointer">
       <X className="control-button cancel" onClick={handleCancel} /> 
       <Mic className={`control-button ${isListening ? 'listening' : ''}`} onClick={handleMicClick} /> 
     </div>
