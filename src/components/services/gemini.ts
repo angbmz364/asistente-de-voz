@@ -1,41 +1,6 @@
-type GeminiResponse = {
-  candidates?: Array<{
-    content?: {
-      parts?: Array<{
-        text?: string;
-      }>;
-    };
-  }>;
-};
-
-const GEMINI_MODEL = import.meta.env.VITE_GEMINI_MODEL ?? "gemini-2.5-flash";
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-const GEMINI_MAX_TOKENS = Number(import.meta.env.VITE_GEMINI_MAX_TOKENS ?? 800);
+import { llmProvider } from '../../lib/ai';
 
 const SYSTEM_PROMPT = `You are Nova, a real-time classroom voice assistant for Colegio San Carlos. You answer spoken audio requests in a short, friendly, and natural Spanish style. If the prompt includes specific class or group information, use that data to answer. If no extra class data is provided, answer based on your academic knowledge and keep the response simple, direct, and conversational. Never use lists, bullet points, numbered items, markdown formatting, or overly long explanations.`;
-
-const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
-
-const extractTextFromResponse = (data: GeminiResponse): string => {
-  const parts = data.candidates?.[0]?.content?.parts;
-
-  if (!parts?.length) {
-    return "";
-  }
-
-  return parts
-    .map((part) => part.text ?? "")
-    .join("")
-    .trim();
-};
-
-const postprocessResponse = (response: string): string => {
-  return response
-    .replace(/[*#-]/g, "")
-    .replace(/\d+\./g, "")
-    .replace(/\n/g, " ")
-    .trim();
-};
 
 const selectVoice = (): SpeechSynthesisVoice | null => {
   if (typeof window === "undefined" || !window.speechSynthesis) {
@@ -70,53 +35,23 @@ export const speakText = (text: string): void => {
   window.speechSynthesis.speak(utterance);
 };
 
-export const askGemini = async (prompt: string): Promise<string> => {
-  if (!GEMINI_API_KEY) {
-    throw new Error("Missing VITE_GEMINI_API_KEY. Add your API key to .env.local.");
+export const askLLM = async (prompt: string): Promise<string> => {
+  try {
+    const result = await llmProvider.generateText(prompt, SYSTEM_PROMPT);
+    console.info(`${llmProvider.getName()} → Response:`, {
+      length: result.text.length,
+      preview: result.text.slice(0, 100),
+      usage: result.usage,
+    });
+    return result.text;
+  } catch (error) {
+    console.error(`${llmProvider.getName()} request failed:`, error);
+    throw error;
   }
-
-  console.info('Sending to Gemini (prompt preview):', { length: prompt.length, preview: prompt.slice(0,300) });
-  const response = await fetch(`${GEMINI_ENDPOINT}?key=${encodeURIComponent(GEMINI_API_KEY)}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      systemInstruction: {
-        role: "system",
-        parts: [
-          {
-            text: SYSTEM_PROMPT,
-          },
-        ],
-      },
-      contents: [
-        {
-          parts: [
-            {
-              text: `${prompt} Responde naturalmente para audio hablado. Mantén la respuesta concisa y conversacional. No uses listas o explicaciones largas.`,
-            },
-          ],
-        },
-      ],
-      generationConfig: {
-        temperature: 0.3,
-        maxOutputTokens: GEMINI_MAX_TOKENS,
-      },
-    }),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Gemini API request failed: ${response.status} ${errorText}`);
-  }
-
-  const data = (await response.json()) as GeminiResponse;
-  const text = extractTextFromResponse(data);
-
-  if (!text) {
-    throw new Error("No response received from Gemini.");
-  }
-
-  return postprocessResponse(text);
 };
+
+/**
+ * Backwards compatibility alias for existing code
+ * @deprecated Use askLLM instead
+ */
+export const askGemini = askLLM;
