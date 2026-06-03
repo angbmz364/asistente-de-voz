@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { askGemini, speakText } from '../services/gemini'
+import { processUserInstruction } from '../services/instructionProcessor'
 import {
   getListeningState,
   startListening,
@@ -27,12 +28,20 @@ const useControls = () => {
     }
 
     startListening(async (transcript) => {
+      if (!transcript) {
+        console.warn('No speech detected.');
+        return;
+      }
+
       try {
-        const response = await askGemini(transcript);
-        console.log("Gemini → Response:", response);
+        const processed = await processUserInstruction(transcript);
+        console.info('Processed instruction:', processed, JSON.stringify(processed, null, 2));
+        const prompt = processed.prompt;
+        const response = await askGemini(prompt);
+        console.log('Gemini → Response:', response);
         speakText(response);
       } catch (error) {
-        console.error("Gemini request failed:", error);
+        console.error('Gemini request failed:', error);
       }
     });
   }, []);
