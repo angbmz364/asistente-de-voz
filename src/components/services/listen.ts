@@ -44,6 +44,15 @@ const listeners = new Set<ListeningListener>();
 let recognition: SpeechRecognitionInstance | null = null;
 let isListening = false;
 
+// Faster-Whisper configuration (front-end client)
+const STT_PROVIDER = (import.meta.env.VITE_STT_PROVIDER ?? "browser").toLowerCase();
+const STT_SERVER_ENDPOINT = import.meta.env.VITE_STT_SERVER_ENDPOINT ?? "http://localhost:11435";
+
+// MediaRecorder state for Faster-Whisper path
+let mediaStream: MediaStream | null = null;
+let mediaRecorder: MediaRecorder | null = null;
+let recordedChunks: Blob[] = [];
+
 const notifyListeners = (listeningState: boolean): void => {
   listeners.forEach((listener) => listener(listeningState));
 };
@@ -99,6 +108,88 @@ export const subscribeListening = (listener: ListeningListener): (() => void) =>
 };
 
 export const startListening = (onTranscript?: TranscriptHandler): boolean => {
+  // If Faster-Whisper provider is configured, record audio and send to local server
+  if (STT_PROVIDER === "faster-whisper") {
+    if (isListening) return true;
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      console.warn("Media devices API not available in this browser.");
+      return false;
+    }
+
+    recordedChunks = [];
+
+    navigator.mediaDevices
+      .getUserMedia({ audio: true })
+      .then((stream) => {
+        mediaStream = stream;
+        try {
+          mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+        } catch (e) {
+          mediaRecorder = new MediaRecorder(stream);
+        }
+
+        mediaRecorder!.ondataavailable = (ev) => {
+          if (ev.data && ev.data.size > 0) {
+            recordedChunks.push(ev.data);
+          }
+        };
+
+        mediaRecorder!.onstop = async () => {
+          const blob = new Blob(recordedChunks, { type: recordedChunks[0]?.type ?? "audio/webm" });
+
+          try {
+            const form = new FormData();
+            form.append("file", blob, "recording.webm");
+
+            const res = await fetch(`${STT_SERVER_ENDPOINT}/transcribe`, {
+              method: "POST",
+              body: form,
+            });
+
+            if (!res.ok) {
+              console.error("STT server error:", await res.text());
+              onTranscript?.("");
+              handleRecognitionEnd();
+              return;
+            }
+
+            const data = await res.json();
+            const text = (data.transcript ?? "").toString().trim();
+
+            if (text) {
+              console.log("Speech → Text:", text);
+            }
+
+            onTranscript?.(text);
+          } catch (err) {
+            console.error("Failed to send audio to STT server:", err);
+            onTranscript?.("");
+          } finally {
+            handleRecognitionEnd();
+            // cleanup
+            if (mediaStream) {
+              mediaStream.getTracks().forEach((t) => t.stop());
+            }
+            mediaRecorder = null;
+            mediaStream = null;
+            recordedChunks = [];
+          }
+        };
+
+        mediaRecorder!.start();
+        isListening = true;
+        notifyListeners(true);
+      })
+      .catch((err) => {
+        console.error("Could not get user media:", err);
+        handleRecognitionEnd();
+      });
+
+    return true;
+  }
+
+  // Fallback: browser SpeechRecognition
   const instance = ensureRecognition();
 
   if (!instance) {
@@ -140,6 +231,19 @@ export const startListening = (onTranscript?: TranscriptHandler): boolean => {
 };
 
 export const stopListening = (): void => {
+  if (STT_PROVIDER === "faster-whisper") {
+    try {
+      if (mediaRecorder && mediaRecorder.state !== "inactive") {
+        mediaRecorder.stop();
+      }
+    } catch (e) {
+      console.error("Error stopping MediaRecorder:", e);
+      handleRecognitionEnd();
+    }
+
+    return;
+  }
+
   if (!recognition) {
     return;
   }
