@@ -30,6 +30,7 @@ export type ClassInfo = {
   schedule: string;
   breakTimes: string;
   description: string;
+  creators?: string;
 };
 
 const STORAGE_KEY = "nova_school_assistant_db_v1";
@@ -132,6 +133,10 @@ const seedDatabase = (db: Database): void => {
     [
       "description",
       "El asistente usa el contexto de la clase para responder preguntas escolares y organizar grupos de trabajo.",
+    ],
+    [
+      "creators",
+      "El grupo de Enzo Puca, formado por Angel Bernal, Misael Herrera, Sergio Gutierrez, Enzo Puca, Sebastian Araujo. Siendo Angel Bernal el programador principal.",
     ],
   ];
 
@@ -247,6 +252,7 @@ export const getClassInfo = async (): Promise<ClassInfo> => {
     schedule: info.schedule || "",
     breakTimes: info.breakTimes || "",
     description: info.description || "",
+    creators: info.creators || "",
   };
 };
 
@@ -257,6 +263,7 @@ export const getClassInfoContext = async (): Promise<string> => {
     `Nivel: ${info.academicLevel}`,
     `Tutor: ${info.tutor}`,
     `Mascota de clase: ${info.classPet}`,
+    info.creators ? `Creadores: ${info.creators}` : "",
     `Horario: ${info.schedule}`,
     `Receso: ${info.breakTimes}`,
   ]
