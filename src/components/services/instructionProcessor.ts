@@ -1,4 +1,4 @@
-import { addHomework, createGroupsBySize, getClassInfoContext, getGroups, getHomework } from "./database";
+import { addHomework, createGroupsBySize, getClassInfo, getClassInfoContext, getGroups, getHomework } from "./database";
 
 export type ProcessedInstruction = {
   prompt: string;
@@ -67,10 +67,16 @@ const extractGroupSize = (transcript: string): number | null => {
 };
 
 const isScheduleRequest = (transcript: string): boolean =>
-  /horario|schedule|clases?|class schedule/i.test(transcript);
+  /horario|schedule|clases?(?: del día| de hoy)?|programaci[oó]n/i.test(transcript);
+
+const isClassPetRequest = (transcript: string): boolean =>
+  /mascota(?: del salón| de la clase)?|animal(?: del salón| de la clase)?/i.test(transcript);
 
 const isTimeRequest = (transcript: string): boolean =>
   /hora|qué hora|que hora|current time|time/i.test(transcript);
+
+const isCourseRequest = (transcript: string): boolean =>
+  /curso|cursos|materias|clases del d[ií]a|qu[eé] clases|que clases|clases hoy/i.test(transcript);
 
 const isGroupQuery = (transcript: string): boolean =>
   /(?:mostrar|ver|listar|qué|que|cuáles?) .*grupos?|grupos? (?:existentes|creados|actuales|mostrar|ver)/i.test(transcript);
@@ -94,6 +100,31 @@ const getCurrentDateContext = (): string => {
     minute: "2-digit",
   });
   return `Hoy es ${dateText} y son las ${timeText}.`;
+};
+
+const hasCourseDetails = (text: string): boolean =>
+  /matem[aá]ticas|comunicaci[oó]n|ciencias|educaci[oó]n f[ií]sica|ingl[eé]s|historia|arte/i.test(text);
+
+const buildClassScheduleContext = async (): Promise<string> => {
+  const info = await getClassInfo();
+  const baseContext = await getClassInfoContext();
+  const scheduleText = info.schedule
+    ? `Horario: ${info.schedule}.`
+    : "Horario: Lunes a viernes 7:20 AM a 2:30 PM.";
+  const courseText = hasCourseDetails(info.schedule)
+    ? ""
+    : "Cursos del día (aproximados): Matemáticas, Comunicación, Ciencias y Educación Física.";
+
+  return [baseContext, scheduleText, courseText].filter(Boolean).join(" ");
+};
+
+const getPetAndScheduleContext = async (): Promise<string> => {
+  const info = await getClassInfo();
+  const scheduleText = info.schedule
+    ? `Horario: ${info.schedule}.`
+    : "Horario: Lunes a viernes 7:20 AM a 2:30 PM.";
+  const petText = info.classPet ? `Mascota de clase: ${info.classPet}.` : "";
+  return [petText, scheduleText].filter(Boolean).join(" ");
 };
 
 const extractHomeworkDescription = (transcript: string): string => {
@@ -187,10 +218,48 @@ export const processUserInstruction = async (
     };
   }
 
-  if (isScheduleRequest(lowerTranscript) || isTutorRequest(lowerTranscript) || wantsTimeRequest) {
-    const contextText = await getClassInfoContext();
+  if (isClassPetRequest(lowerTranscript)) {
+    const contextText = await getPetAndScheduleContext();
+    const prompt = `El usuario preguntó: "${sanitized}". Usa únicamente esta información: ${contextText}. Responde específicamente sobre la mascota del salón y, si es relevante, menciona el horario. No inventes profesores ni cursos.`;
+
+    return {
+      prompt,
+      contextText,
+    };
+  }
+
+  if (isScheduleRequest(lowerTranscript)) {
+    const info = await getClassInfo();
+    const schedule = info.schedule ? info.schedule : "Lunes a viernes 7:20 AM a 2:30 PM";
+    const prompt = `El usuario preguntó: "${sanitized}". Usa únicamente este horario: ${schedule}. Responde de forma natural y breve. No añadas cursos, profesores ni información adicional.`;
+
+    return {
+      prompt,
+      contextText: `Horario: ${schedule}`,
+    };
+  }
+
+  if (isCourseRequest(lowerTranscript)) {
+    const info = await getClassInfo();
+    const scheduleText = info.schedule ? `Horario: ${info.schedule}.` : "Horario: Lunes a viernes 7:20 AM a 2:30 PM.";
+    const courseText = hasCourseDetails(info.schedule)
+      ? ""
+      : "Cursos del día (aproximados): Matemáticas, Comunicación, Ciencias y Educación Física.";
+
+    const contextText = [scheduleText, courseText].filter(Boolean).join(" ");
     const dateContext = getCurrentDateContext();
-    const prompt = `El usuario preguntó: "${sanitized}". ${dateContext} Usa únicamente la siguiente información de clase para responder: ${contextText}. Responde de forma natural y breve.`;
+    const prompt = `El usuario preguntó: "${sanitized}". ${dateContext} Usa únicamente la información de clase: ${contextText}. Si te pregunta por profesores, indica que no hay datos disponibles en el sistema y evita inventar nombres. Responde de forma natural y breve.`;
+
+    return {
+      prompt,
+      contextText,
+    };
+  }
+
+  if (isTutorRequest(lowerTranscript) || wantsTimeRequest) {
+    const contextText = await buildClassScheduleContext();
+    const dateContext = getCurrentDateContext();
+    const prompt = `El usuario preguntó: "${sanitized}". ${dateContext} Usa únicamente la información de clase para responder: ${contextText}. Si te pregunta por las clases del día, provee el horario y los cursos disponibles sin inventar profesores ni detalles no soportados. Responde de forma natural y breve.`;
 
     return {
       prompt,
