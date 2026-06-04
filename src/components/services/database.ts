@@ -130,7 +130,7 @@ const seedDatabase = (db: Database): void => {
     ["classPet", "Alessandro, el cerdito amistoso"],
     [
       "schedule", 
-      "Lunes:Artes Creativas-07:40-08:25;Artes Creativas-08:25-09:10;Trigonometría-09:10-09:55;Trigonometría-10:15-11:00;Inglés-11:00-11:45;Inglés-11:45-12:30;Geometría-13:00-13:45;Geometría-13:45-14:30;Martes:Habilidades-07:40-08:25;Habilidades-08:25-09:10;Raz. Verbal-09:10-09:55;Raz. Verbal-10:15-11:00;Física-11:00-11:45;Física-11:45-12:30;Inglés-13:00-13:45;Inglés-13:45-14:30;Miercoles:Computación-07:40-08:25;Computación-08:25-09:10;Álgebra-09:10-09:55;Álgebra-10:15-11:00;Ecología-11:00-11:45;Ecología-11:45-12:30;Biología-13:00-13:45;Biología-13:45-14:30;Jueves:Química-07:40-08:25;Química-08:25-09:10;Lenguaje-09:10-09:55;Lenguaje-10:15-11:00;Ciencias S.-11:00-11:45;Ciencias S.-11:45-12:30;Raz. Matemático-13:00-13:45;Raz. Matemático-13:45-14:30;Viernes:Investigación-07:40-08:25;Investigación-08:25-09:10;Literatura-09:10-09:55;Plan Lector-10:15-11:00;Aritmética-11:00-11:45;Aritmética-11:45-12:30;Ed. Física-13:00-13:45;Ed. Física-13:45-14:30;"],
+      "Lunes:Artes Creativas-07:40-09:10;Trigonometría-09:10-11:00;Inglés-11:00-12:30;Geometría-13:00-14:30;Martes:Habilidades-07:40-09:10;Raz. Verbal-09:10-11:00;Física-11:00-12:30;Inglés-13:00-14:30;Miércoles:Computación-07:40-09:10;Álgebra-09:10-11:00;Ecología-11:00-12:30;Biología-13:00-14:30;Jueves:Química-07:40-09:10;Lenguaje-09:10-11:00;Ciencias S.-11:00-12:30;Raz. Matemático-13:00-14:30;Viernes:Investigación-07:40-09:10;Literatura-09:10-09:55;Plan Lector-10:15-11:00;Aritmética-11:00-12:30;Ed. Física-13:00-14:30;"],
     ["breakTimes", "9:55 AM - 10:15 AM y 12:30 PM - 1:00 PM"],
     [
       "description",
