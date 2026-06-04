@@ -48,3 +48,10 @@ Notes
 - For Spanish, `small` or `medium` models are recommended for a balance of accuracy and speed.
 - Ensure `ffmpeg` is installed to allow conversion of common audio containers.
 - The first request will download and cache the model, which may take time and disk space.
+- On first startup, Faster-Whisper may print a Hugging Face warning such as:
+  - `Warning: You are sending unauthenticated requests to the HF Hub...`
+  This is normal during model download.
+- After the model finishes downloading, the server should start and be reachable at `http://localhost:11435/`.
+- To reduce download throttling, optionally set `HF_TOKEN` before starting:
+  - PowerShell: `$env:HF_TOKEN = "your_token_here"`
+  - cmd.exe: `set HF_TOKEN=your_token_here`

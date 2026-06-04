@@ -115,7 +115,7 @@ This approach improves:
 
 ### Voice
 
-- Speech-to-Text
+- Speech-to-Text (browser or local Faster-Whisper via `stt_server`)
 - Text-to-Speech
 
 ---

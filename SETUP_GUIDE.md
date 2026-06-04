@@ -51,6 +51,38 @@ VITE_OLLAMA_MAX_TOKENS=200
 pnpm dev
 ```
 
+## Offline Speech-to-Text (Faster-Whisper)
+
+To use the local STT backend instead of browser speech recognition, run the Python server in `stt_server`.
+
+1. Create and activate the virtual environment:
+```powershell
+cd stt_server
+python -m venv venv
+venv\Scripts\Activate.ps1
+```
+
+2. Install dependencies:
+```powershell
+pip install -r requirements.txt
+```
+
+3. Start the server with environment variables:
+```powershell
+$env:FW_MODEL = "small"
+$env:FW_DEVICE = "cpu"
+python main.py
+```
+
+4. The first run may show a Hugging Face warning while the model downloads. This is expected; wait until the server prints the Uvicorn startup message.
+
+5. Verify the server is running by opening:
+```text
+http://localhost:11435/
+```
+
+6. Optional: set `HF_TOKEN` to speed downloads and avoid unauthenticated rate limits.
+
 ## Provider Comparison
 
 | Feature | Gemini | Ollama |
