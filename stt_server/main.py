@@ -5,7 +5,7 @@ import uvicorn
 import tempfile
 import os
 
-MODEL_NAME = os.getenv('FW_MODEL', 'small')
+MODEL_NAME = os.getenv('FW_MODEL', 'tiny')
 DEVICE = os.getenv('FW_DEVICE', 'cpu')
 COMPUTE_TYPE = os.getenv('FW_COMPUTE_TYPE', None)  # e.g., 'int8'
 
