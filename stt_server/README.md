@@ -11,16 +11,31 @@ Quick setup
 
 ```bash
 python -m venv venv
-source venv/bin/activate   # or venv\Scripts\activate on Windows
+# macOS / Linux
+source venv/bin/activate
+# Windows PowerShell
+venv\Scripts\Activate.ps1
+# Windows cmd.exe
+venv\Scripts\activate.bat
+
 pip install -r requirements.txt
 ```
 
 Run
 
 ```bash
-# Optional env vars: FW_MODEL (tiny, base, small, medium, large-v2), FW_DEVICE (cpu, cuda), FW_COMPUTE_TYPE (int8, int8_float16)
+# macOS / Linux
 FW_MODEL=small FW_DEVICE=cpu python main.py
-# or
+# Windows PowerShell
+$env:FW_MODEL = "small"
+$env:FW_DEVICE = "cpu"
+python main.py
+# Windows cmd.exe
+set FW_MODEL=small
+set FW_DEVICE=cpu
+python main.py
+
+# or run uvicorn directly:
 python -m uvicorn main:app --host 0.0.0.0 --port 11435
 ```
 

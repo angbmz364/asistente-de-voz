@@ -27,6 +27,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/")
+async def health_check():
+    return {"status": "ok", "model": MODEL_NAME, "device": DEVICE}
+
 @app.post("/transcribe")
 async def transcribe(file: UploadFile = File(...), language: str = "es"):
     suffix = os.path.splitext(file.filename)[1] or ".webm"
