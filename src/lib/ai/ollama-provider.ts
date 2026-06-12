@@ -1,4 +1,4 @@
-import type { LLMProvider, LLMResponse } from './providers'
+import type { LLMProvider, LLMResponse, StreamingOptions } from './providers'
 
 type OllamaResponse = {
   model?: string;
@@ -63,6 +63,137 @@ class OllamaProvider implements LLMProvider {
       .replace(/\d+\./g, "")
       .replace(/\n/g, " ")
       .trim();
+  }
+
+  /**
+   * Stream tokens from Ollama with callback support
+   * Reads the response stream line by line and calls onToken for each token
+   */
+  async generateTextStream(
+    userPrompt: string,
+    systemPrompt: string | undefined,
+    options: StreamingOptions
+  ): Promise<string> {
+    const { onToken, onError, onComplete } = options;
+
+    try {
+      await this.validateConfig();
+    } catch (error) {
+      onError?.(error instanceof Error ? error : new Error(String(error)));
+      throw error;
+    }
+
+    const fullPrompt = this.buildPrompt(userPrompt, systemPrompt);
+
+    console.info('Streaming from Ollama (prompt preview):', {
+      model: OLLAMA_MODEL,
+      length: fullPrompt.length,
+      preview: fullPrompt.slice(0, 200),
+    });
+
+    let fullResponse = '';
+
+    try {
+      const response = await fetch(`${OLLAMA_ENDPOINT}/api/generate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: OLLAMA_MODEL,
+          prompt: fullPrompt,
+          stream: true,
+          options: {
+            temperature: 0.3,
+            top_k: 40,
+            top_p: 0.9,
+            num_predict: OLLAMA_MAX_TOKENS,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        const error = new Error(
+          `Ollama request failed: ${response.status} ${errorText}`
+        );
+        onError?.(error);
+        throw error;
+      }
+
+      if (!response.body) {
+        const error = new Error("No response body from Ollama");
+        onError?.(error);
+        throw error;
+      }
+
+      // Create a reader for the response stream
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+
+          if (done) {
+            // Process any remaining buffer
+            if (buffer.trim()) {
+              try {
+                const line = JSON.parse(buffer) as OllamaResponse;
+                if (line.response) {
+                  fullResponse += line.response;
+                  onToken?.(line.response);
+                }
+              } catch {
+                // Ignore parse errors on final buffer
+              }
+            }
+            break;
+          }
+
+          // Accumulate chunks and split by newline (NDJSON format)
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+
+          // Process all complete lines, keep incomplete line in buffer
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (!line.trim()) continue;
+
+            try {
+              const data = JSON.parse(line) as OllamaResponse;
+              if (data.response) {
+                fullResponse += data.response;
+                onToken?.(data.response);
+              }
+            } catch (error) {
+              console.warn('Failed to parse Ollama stream line:', error);
+            }
+          }
+        }
+      } finally {
+        reader.releaseLock();
+      }
+
+      onComplete?.();
+
+      // Return processed response
+      return this.postprocessResponse(fullResponse);
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("fetch failed")) {
+        const connError = new Error(
+          `Could not connect to Ollama at ${OLLAMA_ENDPOINT}. Make sure Ollama is running: ollama serve`
+        );
+        onError?.(connError);
+        throw connError;
+      }
+      if (!(error instanceof Error) || !error.message.includes('Ollama request failed')) {
+        onError?.(error instanceof Error ? error : new Error(String(error)));
+      }
+      throw error;
+    }
   }
 
   /**

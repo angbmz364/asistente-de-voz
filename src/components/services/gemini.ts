@@ -1,4 +1,5 @@
 import { llmProvider } from '../../lib/ai';
+import { askLLMStream as askLLMStreamLib, type StreamingOptions } from '../../lib/ai/streaming';
 
 const SYSTEM_PROMPT = `Eres Nova, el asistente de voz educativo para el Colegio San Carlos. Responde solicitudes de audio habladas en español de forma corta, amigable y natural. SOLO atiendes temas educativos: clases, tareas, explicaciones académicas, organización escolar y contenido pedagógico. Si el usuario pide temas no educativos (memes, redes sociales, chismes, videojuegos, entretenimiento, política, etc.), no entres en detalles: redirige amablemente la conversación hacia un tema educativo relacionado o sugiere una actividad de aprendizaje alternativa. Usa únicamente el contexto de clase proporcionado cuando corresponda. Nunca uses listas, viñetas, numeración, formato markdown ni explicaciones excesivamente largas. Mantén la respuesta concisa y adecuada para salida por voz.`;
 
@@ -35,6 +36,16 @@ export const speakText = (text: string): void => {
   window.speechSynthesis.speak(utterance);
 };
 
+/**
+ * Ask the LLM a question (non-streaming, for backward compatibility)
+ * 
+ * @param prompt - The user prompt
+ * @returns The complete response text
+ * 
+ * @example
+ * const response = await askLLM("What is quantum computing?");
+ * speakText(response);
+ */
 export const askLLM = async (prompt: string): Promise<string> => {
   try {
     const result = await llmProvider.generateText(prompt, SYSTEM_PROMPT);
@@ -44,6 +55,55 @@ export const askLLM = async (prompt: string): Promise<string> => {
       usage: result.usage,
     });
     return result.text;
+  } catch (error) {
+    console.error(`${llmProvider.getName()} request failed:`, error);
+    throw error;
+  }
+};
+
+/**
+ * Ask the LLM a question with streaming support
+ * 
+ * Returns tokens progressively via callback for real-time display
+ * 
+ * @param prompt - The user prompt
+ * @param options - Streaming options with callbacks for tokens, errors, and completion
+ * @returns The complete response text
+ * 
+ * @example
+ * const response = await askLLMStream(
+ *   "Explain photosynthesis",
+ *   {
+ *     onToken: (token) => updateDisplayText(token),
+ *     onError: (error) => showErrorMessage(error.message),
+ *     onComplete: () => console.log('Response complete')
+ *   }
+ * );
+ * speakText(response);
+ */
+export const askLLMStream = async (
+  prompt: string,
+  options: StreamingOptions = {}
+): Promise<string> => {
+  try {
+    console.info(`${llmProvider.getName()} streaming...`, {
+      length: prompt.length,
+      preview: prompt.slice(0, 100),
+    });
+
+    const result = await askLLMStreamLib(prompt, SYSTEM_PROMPT, {
+      ...options,
+      onError: (error) => {
+        console.error(`${llmProvider.getName()} streaming failed:`, error);
+        options.onError?.(error);
+      },
+    });
+
+    console.info(`${llmProvider.getName()} streaming complete:`, {
+      length: result.length,
+    });
+
+    return result;
   } catch (error) {
     console.error(`${llmProvider.getName()} request failed:`, error);
     throw error;
