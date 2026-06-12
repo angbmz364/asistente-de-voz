@@ -161,7 +161,7 @@ export const processUserInstruction = async (
       .map((group) => `${group.name}: ${group.members.join(", ")}`)
       .join(". ");
 
-    const prompt = `El usuario pidió: "${sanitized}". Esta solicitud ya se procesó localmente y se generaron los siguientes grupos: ${groupSummary}. Responde de manera natural y concisa usando únicamente esta información.`;
+    const prompt = `El usuario pidió: "${sanitized}". Esta solicitud ya se procesó localmente y se generaron los siguientes grupos: ${groupSummary}. Responde de manera natural dictando los grupos y integrantes usando esta información.`;
 
     return {
       prompt,
