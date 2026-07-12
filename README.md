@@ -1,11 +1,6 @@
 # Nova &middot; School Assistant
-
 Nova is an offline-first classroom voice assistant designed to support teachers and students in real educational environments.
-
-Unlike a traditional chatbot, Nova separates classroom logic from language generation. Administrative tasks such as attendance, homework management, group creation, schedules, and student records are handled locally by the backend, while the language model focuses exclusively on understanding requests and generating natural responses.
-
-The project is built with the goal of eventually operating completely offline inside a classroom.
-
+Unlike a traditional chatbot, Nova separates classroom logic from language generation. Administrative tasks such as attendance, homework management, group creation, schedules, and student records are handled locally by the backend, while the language model focuses -exclusively on understanding requests and generating natural responses.
 ---
 
 ## Features
@@ -62,61 +57,11 @@ Text-to-Speech
 
 ---
 
-## Design Philosophy
-
-Nova treats the language model as a language engine, not as the system itself.
-
-### The Backend Handles
-
-- Student management
-- Homework management
-- Group generation
-- Scheduling
-- Persistent memory
-- Business logic
-
-### The Language Model Handles
-
-- Natural conversation
-- Educational explanations
-- Summaries
-- Response generation
-
-This approach improves:
-
-- Reliability
-- Speed
-- Determinism
-- Offline compatibility
-- Lower inference costs
-
----
-
-## Technology Stack
-
-### Frontend
-
-- React
-- TypeScript
-- Tailwind CSS
-
-### Backend
-
-- TypeScript
-
-### Storage
-
-- SQLite
-
-### AI
-
-- Ollama
-- Gemma
-
-### Voice
-
-- Speech-to-Text (browser or local Faster-Whisper via `stt_server`)
-- Text-to-Speech
+## Tech Stack
+* **Frontend** -- React + TailwindCSS (Vite)
+* **Backend** -- Typescript
+* **Storage** -- Local storage and SQLite
+* **Speech-to-Text** -- Faster-Whisper
 
 ---
 

@@ -19,6 +19,7 @@ export type StreamingOptions = {
   onToken?: StreamingCallback;
   onError?: (error: Error) => void;
   onComplete?: () => void;
+  signal?: AbortSignal;
 };
 
 export interface LLMProvider {

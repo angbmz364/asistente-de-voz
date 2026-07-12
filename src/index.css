@@ -4,12 +4,11 @@
   0%,
   100% {
     transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.28), 0 0 60px rgba(59, 130, 246, 0.35);
+    box-shadow: 0 0 0 0 rgba(134, 59, 255, 0.18), 0 0 60px rgba(134, 59, 255, 0.2);
   }
-
   50% {
     transform: scale(1.03);
-    box-shadow: 0 0 0 14px rgba(34, 211, 238, 0.08), 0 0 80px rgba(59, 130, 246, 0.55);
+    box-shadow: 0 0 0 14px rgba(134, 59, 255, 0.06), 0 0 80px rgba(134, 59, 255, 0.35);
   }
 }
 
@@ -18,27 +17,25 @@
     transform: scale(0.9);
     opacity: 0.35;
   }
-
   100% {
     transform: scale(1.5);
     opacity: 0;
   }
 }
 
+@keyframes thinkingPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(134, 59, 255, 0.12), 0 0 40px rgba(134, 59, 255, 0.15);
+  }
+  50% {
+    transform: scale(1.06);
+    box-shadow: 0 0 0 18px rgba(134, 59, 255, 0.04), 0 0 60px rgba(134, 59, 255, 0.25);
+  }
+}
+
 body {
-  @apply flex h-screen w-screen items-center justify-center overflow-hidden bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.18),transparent_25%),linear-gradient(135deg,#020617,#0f172a_45%,#111827)] text-white;
-}
-
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background-image: radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.12), transparent 18%), radial-gradient(circle at 80% 20%, rgba(168, 85, 247, 0.13), transparent 18%), radial-gradient(circle at 50% 80%, rgba(34, 211, 238, 0.1), transparent 22%);
-  pointer-events: none;
-}
-
-.control-button {
-  @apply opacity-60 p-4 rounded-full bg-neutral-600 shadow-xl box-content;
+  @apply flex h-screen w-screen items-center justify-center overflow-hidden bg-[#f5f5f5] text-[#0f0f0f];
 }
 
 #root {
@@ -49,32 +46,35 @@ body::before {
 
 .controls_container {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   padding: 3rem 0;
   text-align: center;
   gap: 2rem;
 }
 
-.flex-center {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
 .control-button {
-  transition-property: transform, background;
+  @apply p-4 rounded-full bg-white shadow-md border border-neutral-200 text-neutral-600 box-content;
+  transition-property: transform, background, border-color, color;
   transition-duration: 0.15s;
   transition-timing-function: ease-in-out;
+  cursor: pointer;
+}
+
+.control-button:hover {
+  @apply border-purple-300 text-[#863bff];
+}
+
+.control-button:active {
+  transform: scale(0.95);
 }
 
 .listening {
   transform: scale(1.1);
-  background: #f00;
-  @apply shadow-red-500/30 shadow-lg
+  @apply bg-[#863bff] text-white border-[#863bff] shadow-lg shadow-purple-300/40;
 }
 
-.cancel:active {
-  transform: scale(0.95);
+.cancel:hover {
+  @apply text-red-500 border-red-300;
 }
 
 .assistant-shell {
@@ -82,43 +82,35 @@ body::before {
 }
 
 .assistant-orb {
-  @apply relative flex size-44 items-center justify-center rounded-full border border-white/10 bg-linear-to-br from-cyan-300 via-blue-500 to-fuchsia-500 shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_24px_90px_rgba(59,130,246,0.45)] transition-transform duration-300;
+  @apply relative flex size-44 items-center justify-center rounded-full border border-purple-200/50 bg-linear-to-br from-purple-50 via-white to-purple-100 shadow-[0_0_0_1px_rgba(0,0,0,0.04),0_24px_90px_rgba(134,59,255,0.15)] transition-transform duration-300;
 }
 
 .assistant-orb-speaking {
   animation: assistantPulse 1.4s ease-in-out infinite;
 }
 
+.assistant-orb-streaming {
+  animation: thinkingPulse 0.8s ease-in-out infinite;
+}
+
 .assistant-glow {
-  @apply absolute inset-3 rounded-full bg-white/10 blur-xl;
+  @apply absolute inset-3 rounded-full bg-purple-100/50 blur-xl;
 }
 
 .assistant-inner {
-  @apply relative z-10 flex size-28 items-center justify-center rounded-full border border-white/20 bg-slate-950/80 backdrop-blur-md;
+  @apply relative z-10 flex size-28 items-center justify-center rounded-full border border-purple-200/60 bg-white;
 }
 
 .assistant-ring {
-  @apply absolute inset-0 rounded-full border border-white/20;
+  @apply absolute inset-0 rounded-full border border-purple-200/40;
 }
 
 .assistant-icon {
-  @apply text-3xl text-cyan-100 drop-shadow-[0_0_12px_rgba(34,211,238,0.5)];
-}
-
-.assistant-status-card {
-  @apply rounded-2xl border border-white/10 bg-white/5 px-6 py-3 text-center backdrop-blur-md;
-}
-
-.assistant-status-title {
-  @apply text-sm font-semibold text-white;
-}
-
-.assistant-status-copy {
-  @apply mt-1 text-xs text-neutral-300;
+  @apply flex items-center justify-center;
 }
 
 .assistant-wave {
-  @apply absolute rounded-full border border-cyan-200/35;
+  @apply absolute rounded-full border border-purple-300/40;
   animation: assistantWave 1.8s ease-out infinite;
 }
 
@@ -135,4 +127,11 @@ body::before {
 .assistant-wave-three {
   inset: -34px;
   animation-delay: 0.4s;
+}
+
+.assistant-thinking {
+  @apply absolute rounded-full border border-purple-400/50;
+  inset: -46px;
+  animation: assistantWave 1.4s ease-out infinite;
+  animation-delay: 0s;
 }

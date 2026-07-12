@@ -74,7 +74,7 @@ class OllamaProvider implements LLMProvider {
     systemPrompt: string | undefined,
     options: StreamingOptions
   ): Promise<string> {
-    const { onToken, onError, onComplete } = options;
+    const { onToken, onError, onComplete, signal } = options;
 
     try {
       await this.validateConfig();
@@ -99,6 +99,7 @@ class OllamaProvider implements LLMProvider {
         headers: {
           "Content-Type": "application/json",
         },
+        signal,
         body: JSON.stringify({
           model: OLLAMA_MODEL,
           prompt: fullPrompt,

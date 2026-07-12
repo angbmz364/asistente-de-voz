@@ -15,6 +15,7 @@ export interface StreamingOptions {
   onError?: StreamErrorCallback;
   onComplete?: StreamCompleteCallback;
   bufferSize?: number; // Buffer tokens before calling onToken for UI efficiency
+  signal?: AbortSignal;
 }
 
 /**
@@ -46,6 +47,7 @@ export async function askLLMStream(
     onToken,
     onError,
     onComplete,
+    signal,
     bufferSize = 1,
   } = options;
 
@@ -79,6 +81,7 @@ export async function askLLMStream(
           flushBuffer();
           onComplete?.();
         },
+        signal,
       });
     } else {
       // Fallback to non-streaming if provider doesn't support it
