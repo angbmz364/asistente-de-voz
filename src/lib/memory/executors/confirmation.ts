@@ -13,7 +13,7 @@ export const normalizeTranscript = (text: string): string =>
 
 /** Acepta un borrado con respuesta afirmativa o repetición del verbo. */
 const DELETE_CONFIRM_PATTERN =
-  /\b(si|confirmo|confirma|dale|ok|okey|claro|adelante|borra|elimina|quita|saca|sacalo|siguiente)\b/;
+  /\b(si|confirmo|confirma|dale|ok|okey|claro|adelante|borra|elimina|quita|saca|sacalo)\b/;
 
 /** Continúa un listado paginado (siguiente grupo, más tareas). */
 const LIST_CONTINUE_PATTERN =
