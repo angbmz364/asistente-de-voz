@@ -12,6 +12,29 @@ dist
 dist-ssr
 *.local
 
+# ============
+# Python / STT server
+# ============
+# Virtual environments (large, machine-specific)
+venv/
+.venv/
+.venv
+env/
+*.egg-info/
+
+# Python bytecode / caches
+__pycache__/
+*.py[cod]
+*.pyd
+*.so
+
+# Downloaded Whisper model weights
+stt_server/models/
+models/
+
+# Hugging Face cache (downloads model weights on first run)
+.huggingface/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

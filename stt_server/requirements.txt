@@ -2,5 +2,4 @@ fastapi
 uvicorn[standard]
 faster-whisper
 python-multipart
-ffmpeg-python
-# Note: faster-whisper may require additional system dependencies such as ffmpeg
+# Note: faster-whisper requires ffmpeg installed and available on PATH
