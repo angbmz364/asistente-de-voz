@@ -9,12 +9,14 @@ import {
 } from '../services/listen.ts'
 import { useStreamingContext } from '../context/StreamingContext'
 import { StreamingSpeech } from '../services/speech'
+import { addMessage, buildContext } from '../services/conversationStore'
 
 const useControls = () => {
   const [isListening, setIsListening] = useState(getListeningState());
-  const { appendToken, setIsStreaming, setIsSpeaking, reset } = useStreamingContext();
+  const { appendToken, setIsStreaming, setIsSpeaking, reset, isStreaming, isSpeaking } = useStreamingContext();
   const abortRef = useRef<AbortController | null>(null);
   const speechRef = useRef<StreamingSpeech | null>(null);
+  const responseTextRef = useRef('');
 
   useEffect(() => {
     const unsubscribe = subscribeListening(setIsListening);
@@ -27,10 +29,19 @@ const useControls = () => {
     abortRef.current = null;
     speechRef.current?.cancel();
     speechRef.current = null;
-    reset();
-  }, [reset]);
+    setIsStreaming(false);
+    setIsSpeaking(false);
+  }, [setIsStreaming, setIsSpeaking]);
 
   const handleMicClick = useCallback(() => {
+    if (isStreaming || isSpeaking) {
+      abortRef.current?.abort();
+      speechRef.current?.cancel();
+      abortRef.current = null;
+      speechRef.current = null;
+      reset();
+    }
+
     if (getListeningState()) {
       stopListening();
       return;
@@ -45,10 +56,15 @@ const useControls = () => {
       try {
         const processed = await processUserInstruction(transcript);
         console.info('Processed instruction:', processed, JSON.stringify(processed, null, 2));
-        const prompt = processed.prompt;
+
+        const historyContext = buildContext();
+        const prompt = historyContext
+          ? `${historyContext}\n\n${processed.prompt}`
+          : processed.prompt;
 
         reset();
         setIsStreaming(true);
+        responseTextRef.current = '';
 
         const controller = new AbortController();
         abortRef.current = controller;
@@ -59,6 +75,7 @@ const useControls = () => {
         await askLLMStream(prompt, {
           onToken: (token) => {
             appendToken(token);
+            responseTextRef.current += token;
             speech.appendText(token);
           },
           onError: (error) => {
@@ -69,6 +86,8 @@ const useControls = () => {
           onComplete: () => {
             setIsStreaming(false);
             speech.flush();
+            addMessage('user', transcript);
+            addMessage('assistant', responseTextRef.current);
           },
           signal: controller.signal,
           bufferSize: 3,
@@ -83,7 +102,7 @@ const useControls = () => {
         setIsStreaming(false);
       }
     });
-  }, [appendToken, setIsStreaming, setIsSpeaking, reset]);
+  }, [appendToken, setIsStreaming, setIsSpeaking, reset, isStreaming, isSpeaking]);
 
   return { handleMicClick, handleCancel, isListening };
 }

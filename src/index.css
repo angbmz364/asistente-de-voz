@@ -73,8 +73,44 @@ body {
   @apply bg-[#863bff] text-white border-[#863bff] shadow-lg shadow-purple-300/40;
 }
 
+.cancel-active {
+  @apply text-red-500 border-red-300 shadow-md;
+  animation: cancelPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes cancelPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0.05);
+  }
+}
+
 .cancel:hover {
   @apply text-red-500 border-red-300;
+}
+
+.reset {
+  @apply text-neutral-400 border-neutral-200;
+}
+
+.reset:hover {
+  @apply text-amber-500 border-amber-300;
+}
+
+.reset-flash {
+  @apply text-amber-500 border-amber-300;
+  animation: resetFlash 0.3s ease-in-out 2;
+}
+
+@keyframes resetFlash {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
 }
 
 .assistant-shell {
