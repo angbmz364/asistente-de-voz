@@ -8,7 +8,7 @@
 | Ítem | Estado |
 |---|---|
 | Plan | **APROBADO** (`REFACTOR_PLAN.md`) |
-| Implementación | **EN CURSO** (etapa 4: router semántico) |
+| Implementación | **EN CURSO** (etapa 5: memoria) |
 
 ## Etapas
 
@@ -18,8 +18,8 @@
 | 1 | Embeddings (interfaz + Gemini + Ollama + BM25) | **COMPLETADA** | `npm run build` OK; lint verde |
 | 2 | BD: migraciones + sync `documents` | **COMPLETADA** | Tablas creadas; escrituras actualizan docs; roundtrip verificado |
 | 3 | RAG: índice vectorial + retrieval | **COMPLETADA** | `retrieve` devuelve top-K correcto (verificado en corpus ES) |
-| 4 | Router semántico + slot filler | EN CURSO | Frases naturales ES → (ACCIÓN, entidad) |
-| 5 | Memoria: stateStore, ventana corta, summarizer, facts | PENDIENTE | Snapshot correcto; resumen a >8 turnos |
+| 4 | Router semántico + slot filler | **COMPLETADA** | Frases naturales ES → (ACCIÓN, entidad) |
+| 5 | Memoria: stateStore, ventana corta, summarizer, facts | EN CURSO | Snapshot correcto; resumen a >8 turnos |
 | 6 | Ejecutores CRUD + confirmación de borrado | PENDIENTE | Confirmación borra/deniega correctamente |
 | 7 | Slim prompts + pipeline `useControls` | PENDIENTE | Sin duplicación de instrucciones |
 | 8 | Pruebas: lint, build, voz manual ES | PENDIENTE | Lint y build limpios |
@@ -31,7 +31,8 @@
 | — | 0 | Creación del plan de refactor y del seguimiento | `fdf270a` | `REFACTOR_PLAN.md`, `PLAN_PROGRESS.md` |
 | 2026-08-13 | 1 | Embeddings: interfaz `generateEmbedding`, Gemini `text-embedding-004`, Ollama `/api/embeddings`, fallback BM25 en `rag/embeddings.ts`, helper en `ai/index.ts`. Bonus: se arreglaron 11 errores de lint pre-existentes para dejar lint verde | `cd76d67` | `src/lib/ai/providers.ts`, `gemini-provider.ts`, `ollama-provider.ts`, `index.ts`, `src/lib/rag/embeddings.ts`, `.env.example`, `STREAMING_VERIFICATION.ts`, `StreamingContext.tsx`, `useControlsStreaming.tsx`, `listen.ts`, `vite-env.d.ts` |
 | 2026-08-13 | 2 | BD: migraciones §7 (`conversations`, `summaries`, `facts`, `documents`) + `syncDocument`/`removeDocument`/`removeDocumentsByKind`; sync en `createGroupsBySize`, `addHomework`, `clearGroups`, `clearHomework`; roundtrip verificado en Node | `7bc010a` | `src/components/services/database.ts`, `src/vite-env.d.ts` |
-| 2026-08-13 | 3 | RAG: `rag/index.ts` (coseno, índice en memoria, `searchIndex`) + `rag/retrieval.ts` (`retrieve`); lector `getDocuments` en `database.ts`; top-K verificado con corpus ES (tarea de física, tutor, grupos) | — | `src/lib/rag/index.ts`, `src/lib/rag/retrieval.ts`, `src/components/services/database.ts` |
+| 2026-08-13 | 3 | RAG: `rag/index.ts` (coseno, índice en memoria, `searchIndex`) + `rag/retrieval.ts` (`retrieve`); lector `getDocuments` en `database.ts`; top-K verificado con corpus ES (tarea de física, tutor, grupos) | `6cb85ae` | `src/lib/rag/index.ts`, `src/lib/rag/retrieval.ts`, `src/components/services/database.ts` |
+| 2026-08-13 | 4 | Router semántico (`router/intents.ts` prototipos ES, `router/router.ts` coseno + umbral `VITE_ROUTER_THRESHOLD`) + slot filler (`router/slots.ts` LLM JSON + parser local sin acentos). 12 frases ES de prueba → intención correcta; "no olvides la tarea de historia para mañana" → ADD_HOMEWORK + {historia, manana} | — | `src/lib/router/intents.ts`, `src/lib/router/router.ts`, `src/lib/router/slots.ts` |
 
 ## Check-list por etapa
 
