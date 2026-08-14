@@ -17,10 +17,11 @@ type OllamaResponse = {
 const OLLAMA_MODEL = import.meta.env.VITE_OLLAMA_MODEL ?? "gemma3:4b";
 const OLLAMA_ENDPOINT = import.meta.env.VITE_OLLAMA_ENDPOINT ?? "http://localhost:11434";
 const OLLAMA_MAX_TOKENS = Number(import.meta.env.VITE_OLLAMA_MAX_TOKENS ?? 200);
+const OLLAMA_EMBED_MODEL = import.meta.env.VITE_OLLAMA_EMBED_MODEL ?? "nomic-embed-text";
 
 /**
  * Ollama Provider for local LLM inference
- * 
+ *
  * Configured for Gemma 3 4B model running on Ollama
  * Optimized for voice-first assistant with short, concise responses
  */
@@ -51,7 +52,8 @@ class OllamaProvider implements LLMProvider {
       console.info(`✓ Ollama provider validated: ${OLLAMA_MODEL} at ${OLLAMA_ENDPOINT}`);
     } catch (error) {
       throw new Error(
-        `Failed to connect to Ollama at ${OLLAMA_ENDPOINT}. Ensure Ollama is running.`
+        `Failed to connect to Ollama at ${OLLAMA_ENDPOINT}. Ensure Ollama is running.`,
+        { cause: error }
       );
     }
   }
@@ -198,6 +200,40 @@ class OllamaProvider implements LLMProvider {
   }
 
   /**
+   * Generate a vector embedding via Ollama's embeddings endpoint
+   * Falls back to the configured model when no dedicated embed model is set
+   */
+  async generateEmbedding(text: string): Promise<number[]> {
+    await this.validateConfig();
+
+    const response = await fetch(`${OLLAMA_ENDPOINT}/api/embeddings`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: OLLAMA_EMBED_MODEL,
+        prompt: text,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `Ollama embed request failed: ${response.status} ${errorText}`
+      );
+    }
+
+    const data = (await response.json()) as { embedding?: number[] };
+
+    if (!Array.isArray(data.embedding)) {
+      throw new Error("No embedding received from Ollama");
+    }
+
+    return data.embedding;
+  }
+
+  /**
    * Format system prompt and user prompt for Gemma 3
    * Gemma 3 uses a specific chat format that we need to respect
    */
@@ -276,7 +312,8 @@ class OllamaProvider implements LLMProvider {
     } catch (error) {
       if (error instanceof Error && error.message.includes("fetch failed")) {
         throw new Error(
-          `Could not connect to Ollama at ${OLLAMA_ENDPOINT}. Make sure Ollama is running: ollama serve`
+          `Could not connect to Ollama at ${OLLAMA_ENDPOINT}. Make sure Ollama is running: ollama serve`,
+          { cause: error }
         );
       }
       throw error;

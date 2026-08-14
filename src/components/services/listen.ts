@@ -125,7 +125,7 @@ export const startListening = (onTranscript?: TranscriptHandler): boolean => {
         mediaStream = stream;
         try {
           mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
-        } catch (e) {
+        } catch {
           mediaRecorder = new MediaRecorder(stream);
         }
 

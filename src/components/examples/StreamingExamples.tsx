@@ -8,6 +8,7 @@
  * <StreamingExample />
  */
 
+import { useState } from 'react';
 import { useStreaming } from '../hooks/useStreaming';
 
 export const StreamingExampleBasic = () => {
@@ -95,7 +96,7 @@ export const StreamingExampleWithTTS = () => {
  */
 export const StreamingExampleWithErrors = () => {
   const { isStreaming, streamedText, stream, cancel } = useStreaming();
-  const [error, setError] = React.useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleAsk = async () => {
     setError(null);
@@ -155,8 +156,8 @@ export const StreamingExampleControlled = () => {
   const { isStreaming, streamedText, stream, reset } = useStreaming({
     bufferSize: 3,
   });
-  const [messages, setMessages] = React.useState<Array<{ role: 'user' | 'assistant'; text: string }>>([]);
-  const [input, setInput] = React.useState('');
+  const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; text: string }>>([]);
+  const [input, setInput] = useState('');
 
   const handleSubmit = async () => {
     if (!input.trim()) return;

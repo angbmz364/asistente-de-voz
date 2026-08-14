@@ -38,6 +38,11 @@ export interface LLMProvider {
   ): Promise<string>;
 
   /**
+   * Generate a vector embedding for a text chunk
+   */
+  generateEmbedding(text: string): Promise<number[]>;
+
+  /**
    * Validate provider configuration
    */
   validateConfig(): Promise<void>;

@@ -35,7 +35,6 @@ function checkFile(filePath: string, checkName: string, expectedContent?: string
   }
 
   const content = fs.readFileSync(fullPath, 'utf-8')
-  const details: string[] = []
 
   if (expectedContent) {
     const missingContent = expectedContent.filter(s => !content.includes(s))

@@ -15,6 +15,7 @@ type GeminiResponse = {
 };
 
 const GEMINI_MODEL = import.meta.env.VITE_GEMINI_MODEL ?? "gemini-2.5-flash";
+const GEMINI_EMBED_MODEL = import.meta.env.VITE_GEMINI_EMBED_MODEL ?? "text-embedding-004";
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const GEMINI_MAX_TOKENS = Number(import.meta.env.VITE_GEMINI_MAX_TOKENS ?? 800);
 
@@ -48,6 +49,41 @@ class GeminiProvider implements LLMProvider {
       .replace(/\d+\./g, "")
       .replace(/\n/g, " ")
       .trim();
+  }
+
+  async generateEmbedding(text: string): Promise<number[]> {
+    await this.validateConfig();
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_EMBED_MODEL}:embedContent?key=${encodeURIComponent(GEMINI_API_KEY!)}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          content: {
+            parts: [{ text }],
+          },
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `Gemini embed request failed: ${response.status} ${errorText}`
+      );
+    }
+
+    const data = (await response.json()) as { embedding?: { values?: number[] } };
+    const values = data.embedding?.values;
+
+    if (!Array.isArray(values)) {
+      throw new Error("No embedding values received from Gemini.");
+    }
+
+    return values;
   }
 
   async generateText(

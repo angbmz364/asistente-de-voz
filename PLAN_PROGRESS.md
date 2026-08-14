@@ -8,14 +8,14 @@
 | Ítem | Estado |
 |---|---|
 | Plan | **APROBADO** (`REFACTOR_PLAN.md`) |
-| Implementación | **PENDIENTE** (etapa 0 en curso) |
+| Implementación | **EN CURSO** (etapa 2: BD + documentos) |
 
 ## Etapas
 
 | Etapa | Descripción | Estado | Criterio de aceptación |
 |---|---|---|---|
-| 0 | Docs y scaffolding (`REFACTOR_PLAN.md`, `PLAN_PROGRESS.md`) | EN CURSO | Docs en raíz; commit `[docs]` |
-| 1 | Embeddings (interfaz + Gemini + Ollama + BM25) | PENDIENTE | `npm run build` OK |
+| 0 | Docs y scaffolding (`REFACTOR_PLAN.md`, `PLAN_PROGRESS.md`) | **COMPLETADA** | Docs en raíz; commit `fdf270a` |
+| 1 | Embeddings (interfaz + Gemini + Ollama + BM25) | **COMPLETADA** | `npm run build` OK; lint verde |
 | 2 | BD: migraciones + sync `documents` | PENDIENTE | Tablas creadas; escrituras actualizan docs |
 | 3 | RAG: índice vectorial + retrieval | PENDIENTE | `retrieve` devuelve top-K correcto |
 | 4 | Router semántico + slot filler | PENDIENTE | Frases naturales ES → (ACCIÓN, entidad) |
@@ -28,23 +28,24 @@
 
 | Fecha | Etapa | Cambio | Commit | Archivos |
 |---|---|---|---|---|
-| — | 0 | Creación del plan de refactor y del seguimiento | — | `REFACTOR_PLAN.md`, `PLAN_PROGRESS.md` |
+| — | 0 | Creación del plan de refactor y del seguimiento | `fdf270a` | `REFACTOR_PLAN.md`, `PLAN_PROGRESS.md` |
+| 2026-08-13 | 1 | Embeddings: interfaz `generateEmbedding`, Gemini `text-embedding-004`, Ollama `/api/embeddings`, fallback BM25 en `rag/embeddings.ts`, helper en `ai/index.ts`. Bonus: se arreglaron 11 errores de lint pre-existentes para dejar lint verde | — | `src/lib/ai/providers.ts`, `gemini-provider.ts`, `ollama-provider.ts`, `index.ts`, `src/lib/rag/embeddings.ts`, `.env.example`, `STREAMING_VERIFICATION.ts`, `StreamingContext.tsx`, `useControlsStreaming.tsx`, `listen.ts`, `vite-env.d.ts` |
 
 ## Check-list por etapa
 
 ### Etapa 0 — Docs y scaffolding
 - [x] `REFACTOR_PLAN.md` escrito con arquitectura, módulos, migraciones y etapas
 - [x] `PLAN_PROGRESS.md` creado con estado y registro
-- [ ] Commit `[docs]`
+- [x] Commit `[docs]` (`fdf270a`)
 
 ### Etapa 1 — Embeddings
-- [ ] Añadir `generateEmbedding(text): Promise<number[]>` a `LLMProvider` (`src/lib/ai/providers.ts`)
-- [ ] Implementar en `gemini-provider.ts` (endpoint `embedContent`, modelo `text-embedding-004`)
-- [ ] Implementar en `ollama-provider.ts` (`POST {endpoint}/api/embeddings`)
-- [ ] Fallback BM25 en `src/lib/rag/embeddings.ts` (embebido por palabras clave cuando no hay provider)
-- [ ] Exportar helper en `src/lib/ai/index.ts`
-- [ ] `npm run build` OK
-- [ ] Commit `[feat]`
+- [x] Añadir `generateEmbedding(text): Promise<number[]>` a `LLMProvider` (`src/lib/ai/providers.ts`)
+- [x] Implementar en `gemini-provider.ts` (endpoint `embedContent`, modelo `text-embedding-004`)
+- [x] Implementar en `ollama-provider.ts` (`POST {endpoint}/api/embeddings`)
+- [x] Fallback BM25 en `src/lib/rag/embeddings.ts` (embebido por palabras clave cuando no hay provider)
+- [x] Exportar helper en `src/lib/ai/index.ts`
+- [x] `npm run build` OK (y lint verde; se arregló deuda de lint pre-existente)
+- [x] Commit `[feat]`
 
 ### Etapa 2 — BD + documentos
 - [ ] Migraciones §7 en `database.ts` (tablas `conversations`, `summaries`, `facts`, `documents`)

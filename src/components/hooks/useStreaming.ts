@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { askLLMStream, createStreamingSession, type StreamingSession, type StreamingOptions } from '../services/gemini';
+import { askLLMStream, type StreamingSession, type StreamingOptions } from '../services/gemini';
 
 /**
  * Options for the useStreaming hook

@@ -13,7 +13,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react'
-import { askGemini, speakText, askLLMStream } from '../services/gemini'
+import { askGemini, speakText } from '../services/gemini'
 import { processUserInstruction } from '../services/instructionProcessor'
 import {
   getListeningState,
@@ -74,7 +74,6 @@ export const useControlsNonStreaming = () => {
  */
 export const useControlsWithStreaming = () => {
   const [isListening, setIsListening] = useState(getListeningState());
-  const [streamedResponse, setStreamedResponse] = useState('');
   const { isStreaming, streamedText, stream: streamResponse, cancel: cancelStream } = useStreaming({
     bufferSize: 2, // Update UI every 2 tokens
   });
@@ -108,15 +107,12 @@ export const useControlsWithStreaming = () => {
         const prompt = processed.prompt;
 
         // Stream the response
-        setStreamedResponse(''); // Clear previous response
-        
         const completeResponse = await streamResponse(prompt, {
           onToken: (token) => {
             console.debug('Received token:', token);
           },
           onError: (error) => {
             console.error('Streaming error:', error);
-            setStreamedResponse(`Error: ${error.message}`);
           },
           onComplete: () => {
             console.log('Streaming complete, speaking text');
@@ -125,10 +121,11 @@ export const useControlsWithStreaming = () => {
           },
         });
 
-        setStreamedResponse(completeResponse);
+        if (completeResponse) {
+          console.log('Streaming response received');
+        }
       } catch (error) {
         console.error('Request failed:', error);
-        setStreamedResponse(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     });
   }, [streamResponse, streamedText]);
@@ -149,23 +146,11 @@ export const useControlsWithStreaming = () => {
  */
 export const useControlsAdvanced = () => {
   const [isListening, setIsListening] = useState(getListeningState());
-  const [streamingActive, setStreamingActive] = useState(false);
-  const [displayText, setDisplayText] = useState('');
   const [error, setError] = useState<string | null>(null);
-  
+
   const { isStreaming, streamedText, stream: streamResponse, cancel: cancelStream } = useStreaming({
     bufferSize: 3,
   });
-
-  // Sync streaming state
-  useEffect(() => {
-    setStreamingActive(isStreaming);
-  }, [isStreaming]);
-
-  // Update display text from stream
-  useEffect(() => {
-    setDisplayText(streamedText);
-  }, [streamedText]);
 
   useEffect(() => {
     const unsubscribe = subscribeListening(setIsListening);
@@ -194,7 +179,6 @@ export const useControlsAdvanced = () => {
 
       try {
         setError(null);
-        setDisplayText(''); // Clear previous response
         const processed = await processUserInstruction(transcript);
         const prompt = processed.prompt;
 
@@ -203,29 +187,26 @@ export const useControlsAdvanced = () => {
             setError(err.message);
             console.error('Streaming error:', err);
           },
-          onComplete: () => {
-            // Speak after streaming completes
-            if (displayText) {
-              speakText(displayText);
-            }
-          },
         });
 
-        console.log('Stream completed with result:', result);
+        // Speak after streaming completes
+        if (result) {
+          speakText(result);
+        }
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Unknown error';
         setError(message);
         console.error('Request failed:', err);
       }
     });
-  }, [streamResponse, displayText]);
+  }, [streamResponse]);
 
   return {
     handleMicClick,
     handleCancel,
     isListening,
-    isStreaming: streamingActive,
-    displayText,
+    isStreaming,
+    displayText: streamedText,
     error,
     clearError: () => setError(null),
   };
@@ -275,7 +256,7 @@ export const useControlsHybrid = (preferStreaming: boolean = true) => {
           : await askGemini(prompt);
 
         console.log('Response received:', response);
-        speakText(response);
+        speakText(response ?? '');
       } catch (error) {
         console.error('Request failed:', error);
       }
