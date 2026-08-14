@@ -51,6 +51,10 @@ export const INTENTS: Intent[] = [
       "borra la tarea de historia",
       "elimina la tarea de química",
       "ya no dejes la tarea de física",
+      "elimina las tareas pendientes",
+      "borra todas las tareas",
+      "quita las tareas de física",
+      "olvídate de las tareas",
     ],
   },
   {
@@ -75,6 +79,8 @@ export const INTENTS: Intent[] = [
       "forma grupos de trabajo",
       "crea grupos de 3 integrantes",
       "organiza grupos para el proyecto",
+      "haz grupos de 5 para física",
+      "crea grupos de 4 para historia",
     ],
   },
   {
@@ -86,6 +92,8 @@ export const INTENTS: Intent[] = [
       "qué grupos hay formados",
       "muéstrame los grupos de trabajo",
       "cuáles son los grupos actuales",
+      "dime los grupos de física",
+      "qué grupos hay en física",
     ],
   },
   {
@@ -166,6 +174,11 @@ export const INTENTS: Intent[] = [
       "qué es la gravedad",
       "cuéntame sobre la revolución industrial",
       "cómo funciona el sistema solar",
+      "cuándo comenzó la primera guerra mundial",
+      "en qué año terminó la segunda guerra mundial",
+      "cuándo pasó la revolución francesa",
+      "qué causó la independencia del perú",
+      "cuándo se descubrió américa",
     ],
   },
   {
