@@ -1,6 +1,7 @@
 import initSqlJs from "sql.js";
 import type { Database, SqlJsStatic } from "sql.js";
 import sqlWasmUrl from "sql.js/dist/sql-wasm.wasm?url";
+import { generateEmbedding } from "../../lib/ai";
 
 export type Student = {
   id: number;
@@ -32,6 +33,14 @@ export type ClassInfo = {
   description: string;
   creators?: string;
 };
+
+export type DocumentKind =
+  | "homework"
+  | "group"
+  | "student"
+  | "class_info"
+  | "fact"
+  | "summary";
 
 const STORAGE_KEY = "nova_school_assistant_db_v1";
 let SQL: SqlJsStatic | null = null;
@@ -66,6 +75,36 @@ const initializeSchema = (db: Database): void => {
       due_date TEXT,
       created_at TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS conversations (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      role TEXT NOT NULL,
+      content TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS summaries (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      content TEXT NOT NULL,
+      embedding TEXT,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS facts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      content TEXT NOT NULL,
+      embedding TEXT,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS documents (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      kind TEXT NOT NULL,
+      entity_id INTEGER,
+      content TEXT NOT NULL,
+      embedding TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
   `);
 };
 
@@ -77,6 +116,51 @@ const persistDatabase = (db: Database): void => {
   } catch (error) {
     console.error("Failed to persist the local SQLite database:", error);
   }
+};
+
+/**
+ * Re-embebe y re-escribe la proyección RAG de un registro fuente.
+ * No persiste: el llamador es responsable de persistDatabase.
+ */
+export const syncDocument = async (
+  kind: DocumentKind,
+  entityId: number | null,
+  content: string
+): Promise<void> => {
+  if (!content.trim()) return;
+
+  const db = await openDatabase();
+  const embedding = await generateEmbedding(content);
+
+  const removeStmt = db.prepare(
+    "DELETE FROM documents WHERE kind = ? AND (entity_id IS ? OR entity_id = ?);"
+  );
+  removeStmt.run([kind, entityId, entityId]);
+  removeStmt.free();
+
+  db.run(
+    "INSERT INTO documents (kind, entity_id, content, embedding, created_at) VALUES (?, ?, ?, ?, ?);",
+    [kind, entityId, content, JSON.stringify(embedding), new Date().toISOString()]
+  );
+};
+
+/**
+ * Borra la proyección RAG de un registro fuente concreto.
+ */
+export const removeDocument = async (
+  kind: DocumentKind,
+  entityId: number
+): Promise<void> => {
+  const db = await openDatabase();
+  db.run("DELETE FROM documents WHERE kind = ? AND entity_id = ?;", [kind, entityId]);
+};
+
+/**
+ * Borra todas las proyecciones RAG de un tipo.
+ */
+export const removeDocumentsByKind = async (kind: DocumentKind): Promise<void> => {
+  const db = await openDatabase();
+  db.run("DELETE FROM documents WHERE kind = ?;", [kind]);
 };
 
 const seedDatabase = (db: Database): void => {
@@ -276,6 +360,7 @@ export const getClassInfoContext = async (): Promise<string> => {
 export const clearGroups = async (): Promise<void> => {
   const db = await openDatabase();
   db.run("DELETE FROM groups;");
+  await removeDocumentsByKind("group");
   persistDatabase(db);
 };
 
@@ -310,6 +395,17 @@ export const createGroupsBySize = async (groupSize: number): Promise<Group[]> =>
   });
 
   insertGroup.free();
+
+  await removeDocumentsByKind("group");
+  const realGroups = await getGroups();
+  for (const group of realGroups) {
+    await syncDocument(
+      "group",
+      group.id,
+      `Grupo ${group.id}: miembros ${group.members.join(", ")}`
+    );
+  }
+
   persistDatabase(db);
 
   return groups;
@@ -349,10 +445,17 @@ export const addHomework = async (
   );
   insertHomework.run([description, dueDate, createdAt]);
   insertHomework.free();
+  const id = Number(db.exec("SELECT last_insert_rowid() AS id;")[0].values[0][0]);
+
+  await syncDocument(
+    "homework",
+    id,
+    dueDate ? `Tarea: ${description}. Fecha de entrega: ${dueDate}` : `Tarea: ${description}`
+  );
   persistDatabase(db);
 
   return {
-    id: Number(db.exec("SELECT last_insert_rowid() AS id;")[0].values[0][0]),
+    id,
     description,
     dueDate,
     createdAt,
@@ -383,5 +486,6 @@ export const getHomework = async (): Promise<Homework[]> => {
 export const clearHomework = async (): Promise<void> => {
   const db = await openDatabase();
   db.run("DELETE FROM homework;");
+  await removeDocumentsByKind("homework");
   persistDatabase(db);
 };

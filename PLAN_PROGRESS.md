@@ -8,7 +8,7 @@
 | Ítem | Estado |
 |---|---|
 | Plan | **APROBADO** (`REFACTOR_PLAN.md`) |
-| Implementación | **EN CURSO** (etapa 2: BD + documentos) |
+| Implementación | **EN CURSO** (etapa 3: RAG) |
 
 ## Etapas
 
@@ -16,8 +16,8 @@
 |---|---|---|---|
 | 0 | Docs y scaffolding (`REFACTOR_PLAN.md`, `PLAN_PROGRESS.md`) | **COMPLETADA** | Docs en raíz; commit `fdf270a` |
 | 1 | Embeddings (interfaz + Gemini + Ollama + BM25) | **COMPLETADA** | `npm run build` OK; lint verde |
-| 2 | BD: migraciones + sync `documents` | PENDIENTE | Tablas creadas; escrituras actualizan docs |
-| 3 | RAG: índice vectorial + retrieval | PENDIENTE | `retrieve` devuelve top-K correcto |
+| 2 | BD: migraciones + sync `documents` | **COMPLETADA** | Tablas creadas; escrituras actualizan docs; roundtrip verificado |
+| 3 | RAG: índice vectorial + retrieval | EN CURSO | `retrieve` devuelve top-K correcto |
 | 4 | Router semántico + slot filler | PENDIENTE | Frases naturales ES → (ACCIÓN, entidad) |
 | 5 | Memoria: stateStore, ventana corta, summarizer, facts | PENDIENTE | Snapshot correcto; resumen a >8 turnos |
 | 6 | Ejecutores CRUD + confirmación de borrado | PENDIENTE | Confirmación borra/deniega correctamente |
@@ -29,7 +29,8 @@
 | Fecha | Etapa | Cambio | Commit | Archivos |
 |---|---|---|---|---|
 | — | 0 | Creación del plan de refactor y del seguimiento | `fdf270a` | `REFACTOR_PLAN.md`, `PLAN_PROGRESS.md` |
-| 2026-08-13 | 1 | Embeddings: interfaz `generateEmbedding`, Gemini `text-embedding-004`, Ollama `/api/embeddings`, fallback BM25 en `rag/embeddings.ts`, helper en `ai/index.ts`. Bonus: se arreglaron 11 errores de lint pre-existentes para dejar lint verde | — | `src/lib/ai/providers.ts`, `gemini-provider.ts`, `ollama-provider.ts`, `index.ts`, `src/lib/rag/embeddings.ts`, `.env.example`, `STREAMING_VERIFICATION.ts`, `StreamingContext.tsx`, `useControlsStreaming.tsx`, `listen.ts`, `vite-env.d.ts` |
+| 2026-08-13 | 1 | Embeddings: interfaz `generateEmbedding`, Gemini `text-embedding-004`, Ollama `/api/embeddings`, fallback BM25 en `rag/embeddings.ts`, helper en `ai/index.ts`. Bonus: se arreglaron 11 errores de lint pre-existentes para dejar lint verde | `cd76d67` | `src/lib/ai/providers.ts`, `gemini-provider.ts`, `ollama-provider.ts`, `index.ts`, `src/lib/rag/embeddings.ts`, `.env.example`, `STREAMING_VERIFICATION.ts`, `StreamingContext.tsx`, `useControlsStreaming.tsx`, `listen.ts`, `vite-env.d.ts` |
+| 2026-08-13 | 2 | BD: migraciones §7 (`conversations`, `summaries`, `facts`, `documents`) + `syncDocument`/`removeDocument`/`removeDocumentsByKind`; sync en `createGroupsBySize`, `addHomework`, `clearGroups`, `clearHomework`; roundtrip verificado en Node | — | `src/components/services/database.ts`, `src/vite-env.d.ts` |
 
 ## Check-list por etapa
 
@@ -48,12 +49,12 @@
 - [x] Commit `[feat]`
 
 ### Etapa 2 — BD + documentos
-- [ ] Migraciones §7 en `database.ts` (tablas `conversations`, `summaries`, `facts`, `documents`)
-- [ ] `syncDocument(kind, entityId, content)` y `removeDocument(entityId)` (insert/update + borrado de proyección)
-- [ ] Invocar sync en `createGroupsBySize`, `addHomework`, `clearGroups`, `clearHomework`
-- [ ] `persistDatabase` tras cada escritura
-- [ ] Verificar supervivencia a recarga
-- [ ] Commit `[feat]`
+- [x] Migraciones §7 en `database.ts` (tablas `conversations`, `summaries`, `facts`, `documents`)
+- [x] `syncDocument(kind, entityId, content)` y `removeDocument(entityId)` (insert/update + borrado de proyección)
+- [x] Invocar sync en `createGroupsBySize`, `addHomework`, `clearGroups`, `clearHomework`
+- [x] `persistDatabase` tras cada escritura
+- [x] Verificar supervivencia a recarga (roundtrip export/import en Node)
+- [x] Commit `[feat]`
 
 ### Etapa 3 — RAG
 - [ ] `src/lib/rag/index.ts`: índice vectorial (upsert, delete, cache en memoria)
