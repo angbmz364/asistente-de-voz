@@ -117,7 +117,7 @@ class GeminiProvider implements LLMProvider {
             {
               parts: [
                 {
-                  text: `${prompt} Responde naturalmente para audio hablado. Mantén la respuesta concisa y conversacional. No uses listas o explicaciones largas.`,
+                  text: prompt,
                 },
               ],
             },
@@ -182,7 +182,7 @@ class GeminiProvider implements LLMProvider {
           {
             parts: [
               {
-                text: `${prompt} Responde naturalmente para audio hablado. Mantén la respuesta concisa y conversacional. No uses listas o explicaciones largas.`,
+                text: prompt,
               },
             ],
           },

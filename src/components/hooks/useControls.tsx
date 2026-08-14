@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { askLLMStream } from '../services/gemini'
+import { askLLMStream, speakText } from '../services/gemini'
 import { processUserInstruction } from '../services/instructionProcessor'
 import {
   getListeningState,
@@ -9,7 +9,8 @@ import {
 } from '../services/listen.ts'
 import { useStreamingContext } from '../context/StreamingContext'
 import { StreamingSpeech } from '../services/speech'
-import { addMessage, buildContext } from '../services/conversationStore'
+import { addMessage } from '../services/conversationStore'
+import { updateState } from '../../lib/memory/stateStore'
 
 const useControls = () => {
   const [isListening, setIsListening] = useState(getListeningState());
@@ -55,12 +56,22 @@ const useControls = () => {
 
       try {
         const processed = await processUserInstruction(transcript);
-        console.info('Processed instruction:', processed, JSON.stringify(processed, null, 2));
 
-        const historyContext = buildContext();
-        const prompt = historyContext
-          ? `${historyContext}\n\n${processed.prompt}`
-          : processed.prompt;
+        if (processed.localResponse) {
+          reset();
+          setIsStreaming(false);
+          appendToken(processed.localResponse);
+          speakText(processed.localResponse);
+          addMessage('user', transcript);
+          addMessage('assistant', processed.localResponse);
+          updateState({
+            userMessage: transcript,
+            intent: processed.intent,
+            executorResult: processed.executorResult,
+            response: processed.localResponse,
+          });
+          return;
+        }
 
         reset();
         setIsStreaming(true);
@@ -72,7 +83,7 @@ const useControls = () => {
         const speech = new StreamingSpeech(setIsSpeaking);
         speechRef.current = speech;
 
-        await askLLMStream(prompt, {
+        await askLLMStream(processed.prompt, {
           onToken: (token) => {
             appendToken(token);
             responseTextRef.current += token;
@@ -88,6 +99,11 @@ const useControls = () => {
             speech.flush();
             addMessage('user', transcript);
             addMessage('assistant', responseTextRef.current);
+            updateState({
+              userMessage: transcript,
+              intent: processed.intent,
+              response: responseTextRef.current,
+            });
           },
           signal: controller.signal,
           bufferSize: 3,
