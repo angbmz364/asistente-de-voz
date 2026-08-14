@@ -1,9 +1,8 @@
 import {
   addHomework,
-  deleteHomeworkById,
   getHomework,
 } from "../../../components/services/database";
-import { clearPendingAction, getState, setPendingAction } from "../stateStore";
+import { getState, setPendingAction } from "../stateStore";
 import type { ExecutorContext, ExecutorResult } from "./types";
 
 export async function addHomeworkExecutor(ctx: ExecutorContext): Promise<ExecutorResult> {
@@ -33,28 +32,33 @@ export async function removeHomeworkExecutor(ctx: ExecutorContext): Promise<Exec
     return { ok: true, summaryText: `No tengo registrada una tarea${subject} para borrar.` };
   }
 
-  const piece = candidates[0];
-
-  if (!ctx.confirmed) {
+  // Sin materia concreta: borrado masivo de todas las pendientes.
+  if (!target) {
     setPendingAction({
       action: "delete",
-      target: `tarea de ${piece.description}`,
+      target: `las ${candidates.length} tareas pendientes`,
       kind: "homework",
-      entityId: piece.id,
+      scope: "all",
     });
     return {
       ok: true,
-      summaryText: `¿Confirmo que borro la tarea de ${piece.description}?`,
+      summaryText: `¿Confirmo que borro las ${candidates.length} tareas pendientes?`,
       pendingAction: getState().pendingAction,
     };
   }
 
-  await deleteHomeworkById(piece.id);
-  clearPendingAction();
+  const piece = candidates[0];
+  setPendingAction({
+    action: "delete",
+    target: `tarea de ${piece.description}`,
+    kind: "homework",
+    entityId: piece.id,
+    scope: "one",
+  });
   return {
     ok: true,
-    summaryText: `Borré la tarea de ${piece.description}.`,
-    removedLabel: `tarea ${piece.description}`,
+    summaryText: `¿Confirmo que borro la tarea de ${piece.description}?`,
+    pendingAction: getState().pendingAction,
   };
 }
 

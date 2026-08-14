@@ -6,7 +6,7 @@ const provider: STTProvider = {
   stopListening: () => listen.stopListening(),
   getListeningState: () => listen.getListeningState(),
   subscribeListening: (listener) => listen.subscribeListening(listener),
-  getName: () => (import.meta.env.VITE_STT_PROVIDER ?? 'browser') as string,
+  getName: () => (import.meta.env?.VITE_STT_PROVIDER ?? 'browser') as string,
 };
 
 export default provider;

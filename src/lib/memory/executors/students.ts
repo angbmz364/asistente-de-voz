@@ -1,9 +1,8 @@
 import {
   addStudent,
-  deleteStudentById,
   getStudentByName,
 } from "../../../components/services/database";
-import { clearPendingAction, getState, setPendingAction } from "../stateStore";
+import { getState, setPendingAction } from "../stateStore";
 import type { ExecutorContext, ExecutorResult } from "./types";
 
 export async function addStudentExecutor(ctx: ExecutorContext): Promise<ExecutorResult> {
@@ -30,21 +29,16 @@ export async function removeStudentExecutor(ctx: ExecutorContext): Promise<Execu
     return { ok: true, summaryText: `No encuentro a ${name} en el salón.` };
   }
 
-  if (!ctx.confirmed) {
-    setPendingAction({
-      action: "delete",
-      target: `a ${name} del salón`,
-      kind: "student",
-      entityId: student.id,
-    });
-    return {
-      ok: true,
-      summaryText: `¿Confirmo que saco a ${name} del salón?`,
-      pendingAction: getState().pendingAction,
-    };
-  }
-
-  await deleteStudentById(student.id);
-  clearPendingAction();
-  return { ok: true, summaryText: `Quité a ${name} del salón.`, removedLabel: `estudiante ${name}` };
+  setPendingAction({
+    action: "delete",
+    target: `a ${name} del salón`,
+    kind: "student",
+    entityId: student.id,
+    scope: "one",
+  });
+  return {
+    ok: true,
+    summaryText: `¿Confirmo que saco a ${name} del salón?`,
+    pendingAction: getState().pendingAction,
+  };
 }

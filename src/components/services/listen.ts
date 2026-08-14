@@ -45,8 +45,8 @@ let recognition: SpeechRecognitionInstance | null = null;
 let isListening = false;
 
 // Faster-Whisper configuration (front-end client)
-const STT_PROVIDER = (import.meta.env.VITE_STT_PROVIDER ?? "browser").toLowerCase();
-const STT_SERVER_ENDPOINT = import.meta.env.VITE_STT_SERVER_ENDPOINT ?? "http://localhost:11435";
+const STT_PROVIDER = (import.meta.env?.VITE_STT_PROVIDER ?? "browser").toLowerCase();
+const STT_SERVER_ENDPOINT = import.meta.env?.VITE_STT_SERVER_ENDPOINT ?? "http://localhost:11435";
 
 // MediaRecorder state for Faster-Whisper path
 let mediaStream: MediaStream | null = null;

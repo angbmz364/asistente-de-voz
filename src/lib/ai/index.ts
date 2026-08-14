@@ -10,7 +10,7 @@ import { embed } from '../rag/embeddings'
  * Set VITE_LLM_PROVIDER=gemini to use Gemini API (default)
  */
 const getProvider = (): LLMProvider => {
-  const provider = (import.meta.env.VITE_LLM_PROVIDER ?? 'gemini').toLowerCase();
+  const provider = (import.meta.env?.VITE_LLM_PROVIDER ?? 'gemini').toLowerCase();
 
   switch (provider) {
     case 'ollama':

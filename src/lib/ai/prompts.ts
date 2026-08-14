@@ -18,7 +18,7 @@ const SMALL_TURNS = 2;
 
 /** Ollama y modelos chicos: presupuesto reducido de contexto. */
 export const isSmallBudget = (): boolean =>
-  (import.meta.env.VITE_LLM_PROVIDER ?? "gemini").toLowerCase() === "ollama";
+  (import.meta.env?.VITE_LLM_PROVIDER ?? "gemini").toLowerCase() === "ollama";
 
 export const getPromptBudget = (): { docs: number; turns: number } =>
   isSmallBudget() ? { docs: SMALL_DOCS, turns: SMALL_TURNS } : { docs: LARGE_DOCS, turns: LARGE_TURNS };

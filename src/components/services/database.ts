@@ -13,6 +13,7 @@ export type Group = {
   id: number;
   name: string;
   members: string[];
+  subject: string;
   createdAt: string;
 };
 
@@ -72,6 +73,7 @@ const initializeSchema = (db: Database): void => {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
       members TEXT NOT NULL,
+      subject TEXT NOT NULL DEFAULT '',
       created_at TEXT NOT NULL
     );
     CREATE TABLE IF NOT EXISTS homework (
@@ -111,6 +113,16 @@ const initializeSchema = (db: Database): void => {
       created_at TEXT NOT NULL
     );
   `);
+};
+
+/** Migra una BD previa que no tenga la columna `subject` en groups. */
+const ensureGroupSubjectColumn = (db: Database): void => {
+  const res = db.exec("PRAGMA table_info(groups);");
+  if (res.length === 0) return;
+  const hasSubject = res[0].values.some((row) => row[1] === "subject");
+  if (!hasSubject) {
+    db.run("ALTER TABLE groups ADD COLUMN subject TEXT NOT NULL DEFAULT '';");
+  }
 };
 
 export const persistDatabase = (db: Database): void => {
@@ -253,6 +265,7 @@ export const openDatabase = async (): Promise<Database> => {
   database = saved ? new SQL.Database(fromBase64(saved)) : new SQL.Database();
 
   initializeSchema(database);
+  ensureGroupSubjectColumn(database);
 
   if (!saved) {
     seedDatabase(database);
@@ -362,14 +375,26 @@ export const getClassInfoContext = async (): Promise<string> => {
     .join(". ");
 };
 
-export const clearGroups = async (): Promise<void> => {
+export const clearGroups = async (subject?: string | null): Promise<void> => {
   const db = await openDatabase();
-  db.run("DELETE FROM groups;");
-  await removeDocumentsByKind("group");
+
+  const existing = await getGroups(subject);
+  for (const group of existing) {
+    await removeDocument("group", group.id);
+  }
+
+  if (subject) {
+    db.run("DELETE FROM groups WHERE subject = ?;", [subject]);
+  } else {
+    db.run("DELETE FROM groups;");
+  }
   persistDatabase(db);
 };
 
-export const createGroupsBySize = async (groupSize: number): Promise<Group[]> => {
+export const createGroupsBySize = async (
+  groupSize: number,
+  subject: string = ""
+): Promise<Group[]> => {
   const students = await getAllStudents();
   const groups: Group[] = [];
   let bucket: string[] = [];
@@ -382,6 +407,7 @@ export const createGroupsBySize = async (groupSize: number): Promise<Group[]> =>
         id: groups.length + 1,
         name: `Grupo ${groups.length + 1}`,
         members: [...bucket],
+        subject,
         createdAt: new Date().toISOString(),
       });
       bucket = [];
@@ -389,25 +415,33 @@ export const createGroupsBySize = async (groupSize: number): Promise<Group[]> =>
   });
 
   const db = await openDatabase();
-  db.run("DELETE FROM groups;");
+
+  const stale = await getGroups(subject);
+  for (const group of stale) {
+    await removeDocument("group", group.id);
+  }
+  if (subject) {
+    db.run("DELETE FROM groups WHERE subject = ?;", [subject]);
+  } else {
+    db.run("DELETE FROM groups;");
+  }
 
   const insertGroup = db.prepare(
-    "INSERT INTO groups (name, members, created_at) VALUES (?, ?, ?);"
+    "INSERT INTO groups (name, members, subject, created_at) VALUES (?, ?, ?, ?);"
   );
 
   groups.forEach((group) => {
-    insertGroup.run([group.name, JSON.stringify(group.members), group.createdAt]);
+    insertGroup.run([group.name, JSON.stringify(group.members), group.subject, group.createdAt]);
   });
 
   insertGroup.free();
 
-  await removeDocumentsByKind("group");
-  const realGroups = await getGroups();
+  const realGroups = await getGroups(subject);
   for (const group of realGroups) {
     await syncDocument(
       "group",
       group.id,
-      `Grupo ${group.id}: miembros ${group.members.join(", ")}`
+      `Grupo ${group.id}${group.subject ? ` de ${group.subject}` : ""}: miembros ${group.members.join(", ")}`
     );
   }
 
@@ -416,12 +450,18 @@ export const createGroupsBySize = async (groupSize: number): Promise<Group[]> =>
   return groups;
 };
 
-export const getGroups = async (): Promise<Group[]> => {
+export const getGroups = async (subject?: string | null): Promise<Group[]> => {
   const db = await openDatabase();
 
-  const statement = db.prepare(
-    "SELECT id, name, members, created_at FROM groups ORDER BY id;"
-  );
+  const statement = subject
+    ? db.prepare(
+        "SELECT id, name, members, subject, created_at FROM groups WHERE subject = ? ORDER BY id;"
+      )
+    : db.prepare(
+        "SELECT id, name, members, subject, created_at FROM groups ORDER BY subject, id;"
+      );
+  if (subject) statement.bind([subject]);
+
   const groups: Group[] = [];
 
   while (statement.step()) {
@@ -430,12 +470,18 @@ export const getGroups = async (): Promise<Group[]> => {
       id: Number(row.id),
       name: String(row.name),
       members: JSON.parse(String(row.members)),
+      subject: String(row.subject ?? ""),
       createdAt: String(row.created_at),
     });
   }
 
   statement.free();
   return groups;
+};
+
+export const getGroupSubjects = async (): Promise<string[]> => {
+  const groups = await getGroups();
+  return [...new Set(groups.map((g) => g.subject).filter(Boolean))];
 };
 
 export const addHomework = async (

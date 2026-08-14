@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "tests": "tsx tests/intents.test.ts"
+    "tests": "tsx tests/intents.test.ts && tsx tests/confirmation.test.ts"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.0",

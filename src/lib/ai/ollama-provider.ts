@@ -14,10 +14,10 @@ type OllamaResponse = {
   eval_duration?: number;
 };
 
-const OLLAMA_MODEL = import.meta.env.VITE_OLLAMA_MODEL ?? "gemma3:4b";
-const OLLAMA_ENDPOINT = import.meta.env.VITE_OLLAMA_ENDPOINT ?? "http://localhost:11434";
-const OLLAMA_MAX_TOKENS = Number(import.meta.env.VITE_OLLAMA_MAX_TOKENS ?? 200);
-const OLLAMA_EMBED_MODEL = import.meta.env.VITE_OLLAMA_EMBED_MODEL ?? "nomic-embed-text";
+const OLLAMA_MODEL = import.meta.env?.VITE_OLLAMA_MODEL ?? "gemma3:4b";
+const OLLAMA_ENDPOINT = import.meta.env?.VITE_OLLAMA_ENDPOINT ?? "http://localhost:11434";
+const OLLAMA_MAX_TOKENS = Number(import.meta.env?.VITE_OLLAMA_MAX_TOKENS ?? 200);
+const OLLAMA_EMBED_MODEL = import.meta.env?.VITE_OLLAMA_EMBED_MODEL ?? "nomic-embed-text";
 
 /**
  * Ollama Provider for local LLM inference

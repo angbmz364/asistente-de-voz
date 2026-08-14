@@ -13,10 +13,19 @@ export type StateEntity = {
 };
 
 export type PendingAction = {
-  action: "delete";
+  action: "delete" | "create_groups" | "list_groups";
   target: string;
   kind: StateEntityKind;
   entityId?: number;
+  /** delete: uno o lote completo */
+  scope?: "one" | "all";
+  /** create_groups: tamaño pedido, esperando curso */
+  size?: number;
+  /** delete: curso específico; list_groups: curso del listado */
+  subject?: string | null;
+  /** list_groups: ids y página del listado paginado */
+  groupIds?: number[];
+  page?: number;
 };
 
 export type AssistantState = {

@@ -14,10 +14,10 @@ type GeminiResponse = {
   };
 };
 
-const GEMINI_MODEL = import.meta.env.VITE_GEMINI_MODEL ?? "gemini-2.5-flash";
-const GEMINI_EMBED_MODEL = import.meta.env.VITE_GEMINI_EMBED_MODEL ?? "text-embedding-004";
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-const GEMINI_MAX_TOKENS = Number(import.meta.env.VITE_GEMINI_MAX_TOKENS ?? 800);
+const GEMINI_MODEL = import.meta.env?.VITE_GEMINI_MODEL ?? "gemini-2.5-flash";
+const GEMINI_EMBED_MODEL = import.meta.env?.VITE_GEMINI_EMBED_MODEL ?? "text-embedding-004";
+const GEMINI_API_KEY = import.meta.env?.VITE_GEMINI_API_KEY;
+const GEMINI_MAX_TOKENS = Number(import.meta.env?.VITE_GEMINI_MAX_TOKENS ?? 800);
 
 const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
