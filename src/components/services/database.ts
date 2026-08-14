@@ -597,3 +597,45 @@ export const getLatestSummary = async (): Promise<string | null> => {
   statement.free();
   return result;
 };
+
+/** Borra una tarea por id y su proyección RAG. No persiste. */
+export const deleteHomeworkById = async (id: number): Promise<void> => {
+  const db = await openDatabase();
+  db.run("DELETE FROM homework WHERE id = ?;", [id]);
+  db.run("DELETE FROM documents WHERE kind = 'homework' AND entity_id = ?;", [id]);
+};
+
+/** Agrega un estudiante y sincroniza su proyección RAG. */
+export const addStudent = async (name: string, seat: string | null = null): Promise<Student> => {
+  const db = await openDatabase();
+  const insertStudent = db.prepare("INSERT INTO students (name, seat) VALUES (?, ?);");
+  insertStudent.run([name, seat]);
+  insertStudent.free();
+  const id = Number(db.exec("SELECT last_insert_rowid() AS id;")[0].values[0][0]);
+
+  await syncDocument("student", id, `Estudiante: ${name}`);
+
+  return { id, name, seat: seat ?? "" };
+};
+
+export const getStudentByName = async (name: string): Promise<Student | null> => {
+  const db = await openDatabase();
+  const statement = db.prepare(
+    "SELECT id, name, seat FROM students WHERE lower(name) = lower(?) LIMIT 1;"
+  );
+  statement.bind([name]);
+  let student: Student | null = null;
+  if (statement.step()) {
+    const row = statement.getAsObject();
+    student = { id: Number(row.id), name: String(row.name), seat: String(row.seat) };
+  }
+  statement.free();
+  return student;
+};
+
+/** Borra un estudiante por id y su proyección RAG. No persiste. */
+export const deleteStudentById = async (id: number): Promise<void> => {
+  const db = await openDatabase();
+  db.run("DELETE FROM students WHERE id = ?;", [id]);
+  db.run("DELETE FROM documents WHERE kind = 'student' AND entity_id = ?;", [id]);
+};

@@ -8,7 +8,7 @@
 | Ítem | Estado |
 |---|---|
 | Plan | **APROBADO** (`REFACTOR_PLAN.md`) |
-| Implementación | **EN CURSO** (etapa 6: ejecutores) |
+| Implementación | **EN CURSO** (etapa 7: prompts slim + pipeline) |
 
 ## Etapas
 
@@ -20,8 +20,8 @@
 | 3 | RAG: índice vectorial + retrieval | **COMPLETADA** | `retrieve` devuelve top-K correcto (verificado en corpus ES) |
 | 4 | Router semántico + slot filler | **COMPLETADA** | Frases naturales ES → (ACCIÓN, entidad) |
 | 5 | Memoria: stateStore, ventana corta, summarizer, facts | **COMPLETADA** | Snapshot correcto (10 pruebas); ventana 4 turnos en `conversations`; resumen >8 turnos; reset por idle |
-| 6 | Ejecutores CRUD + confirmación de borrado | EN CURSO | Confirmación borra/deniega correctamente |
-| 7 | Slim prompts + pipeline `useControls` | PENDIENTE | Sin duplicación de instrucciones |
+| 6 | Ejecutores CRUD + confirmación de borrado | **COMPLETADA** | Confirmación borra/deniega correctamente (loop verificado) |
+| 7 | Slim prompts + pipeline `useControls` | EN CURSO | Sin duplicación de instrucciones |
 | 8 | Pruebas: lint, build, voz manual ES | PENDIENTE | Lint y build limpios |
 
 ## Registro de actividad
@@ -33,7 +33,8 @@
 | 2026-08-13 | 2 | BD: migraciones §7 (`conversations`, `summaries`, `facts`, `documents`) + `syncDocument`/`removeDocument`/`removeDocumentsByKind`; sync en `createGroupsBySize`, `addHomework`, `clearGroups`, `clearHomework`; roundtrip verificado en Node | `7bc010a` | `src/components/services/database.ts`, `src/vite-env.d.ts` |
 | 2026-08-13 | 3 | RAG: `rag/index.ts` (coseno, índice en memoria, `searchIndex`) + `rag/retrieval.ts` (`retrieve`); lector `getDocuments` en `database.ts`; top-K verificado con corpus ES (tarea de física, tutor, grupos) | `6cb85ae` | `src/lib/rag/index.ts`, `src/lib/rag/retrieval.ts`, `src/components/services/database.ts` |
 | 2026-08-13 | 4 | Router semántico (`router/intents.ts` prototipos ES, `router/router.ts` coseno + umbral `VITE_ROUTER_THRESHOLD`) + slot filler (`router/slots.ts` LLM JSON + parser local sin acentos). 12 frases ES de prueba → intención correcta; "no olvides la tarea de historia para mañana" → ADD_HOMEWORK + {historia, manana} | `ebe544a` | `src/lib/router/intents.ts`, `src/lib/router/router.ts`, `src/lib/router/slots.ts` |
-| 2026-08-13 | 5 | Memoria: `memory/stateStore.ts` (snapshot determinista, tope 8, idle 30 min, pendingAction), rewrite `conversationStore.ts` (ventana 4 turnos persistida en tabla `conversations`), `memory/summarizer.ts` (resumen rodante >8 turnos en `summaries`), `memory/facts.ts` (pendientes embebidos en `documents`). Helpers BD: `openDatabase`/`persistDatabase` exportadas, conversaciones y resúmenes. Se corrigió uso de `bind` en SELECT con parámetros | — | `src/lib/memory/*`, `src/components/services/conversationStore.ts`, `database.ts`, `src/vite-env.d.ts` |
+| 2026-08-13 | 5 | Memoria: `memory/stateStore.ts` (snapshot determinista, tope 8, idle 30 min, pendingAction), rewrite `conversationStore.ts` (ventana 4 turnos persistida en tabla `conversations`), `memory/summarizer.ts` (resumen rodante >8 turnos en `summaries`), `memory/facts.ts` (pendientes embebidos en `documents`). Helpers BD: `openDatabase`/`persistDatabase` exportadas, conversaciones y resúmenes. Se corrigió uso de `bind` en SELECT con parámetros | `d00bf16` | `src/lib/memory/*`, `src/components/services/conversationStore.ts`, `database.ts`, `src/vite-env.d.ts` |
+| 2026-08-13 | 6 | Ejecutores CRUD ES (`executors/homework|groups|students|classFacts`) + dispatch `executors/index.ts` con loop de confirmación (`pendingAction` con `entityId`). Helpers BD: `deleteHomeworkById`, `addStudent`, `getStudentByName`, `deleteStudentById`, `syncDocument` para estudiantes. Captura de nombre en `slots.ts`. Loop verificado (pregunta → confirmar borra / denegar no borra) | — | `src/lib/memory/executors/*`, `src/lib/memory/stateStore.ts`, `database.ts`, `src/lib/router/slots.ts` |
 
 ## Check-list por etapa
 
@@ -81,10 +82,10 @@
 - [x] Commit `[feat]`
 
 ### Etapa 6 — Ejecutores + confirmación
-- [ ] `executors/homework.ts`, `groups.ts`, `students.ts`, `classFacts.ts` (CRUD completo ES)
-- [ ] Loop de confirmación de borrado (estado `pendingAction`)
-- [ ] Test voz: "borra la tarea de historia" → pregunta → confirmar borra / denegar no borra
-- [ ] Commit `[feat]`
+- [x] `executors/homework.ts`, `groups.ts`, `students.ts`, `classFacts.ts` (CRUD completo ES)
+- [x] Loop de confirmación de borrado (estado `pendingAction`)
+- [x] Test voz: "borra la tarea de historia" → pregunta → confirmar borra / denegar no borra (verificado)
+- [x] Commit `[feat]`
 
 ### Etapa 7 — Slim prompts + pipeline
 - [ ] `src/lib/ai/prompts.ts` (SYSTEM_PROMPT delgado centralizado)

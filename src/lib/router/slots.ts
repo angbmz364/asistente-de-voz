@@ -95,7 +95,14 @@ export function localSlots(transcript: string): Slots {
       slots.objetivo = afterTask[1];
     } else {
       const afterGroups = plain.match(/grupos de\s+([a-záéíóúñ]+)/);
-      if (afterGroups) slots.objetivo = afterGroups[1];
+      if (afterGroups) {
+        slots.objetivo = afterGroups[1];
+      } else {
+        const afterName = plain.match(
+          /(?:agrega|añade|añadí|quita|retira|inscribe)\s+a\s+([a-záéíóúñ]+)/
+        );
+        if (afterName) slots.objetivo = afterName[1];
+      }
     }
   }
 

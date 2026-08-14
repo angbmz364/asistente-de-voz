@@ -12,13 +12,20 @@ export type StateEntity = {
   label: string;
 };
 
+export type PendingAction = {
+  action: "delete";
+  target: string;
+  kind: StateEntityKind;
+  entityId?: number;
+};
+
 export type AssistantState = {
   topic: string | null;
   lastUserMessage: string;
   lastAssistantSummary: string;
   importantThings: string[];
   entitiesInPlay: StateEntity[];
-  pendingAction: { action: "delete"; target: string } | null;
+  pendingAction: PendingAction | null;
   recentIntents: string[];
   sessionId: string;
   updatedAt: string;
@@ -151,6 +158,14 @@ export function updateState(input: UpdateStateInput): void {
 export function clearPendingAction(): void {
   const state = getState();
   state.pendingAction = null;
+  state.updatedAt = new Date().toISOString();
+  persist(state);
+}
+
+/** Lo escribe el ejecutor de borrado antes de mutar la BD. */
+export function setPendingAction(action: PendingAction): void {
+  const state = getState();
+  state.pendingAction = action;
   state.updatedAt = new Date().toISOString();
   persist(state);
 }
