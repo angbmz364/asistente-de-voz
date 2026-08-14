@@ -42,6 +42,11 @@ export type DocumentKind =
   | "fact"
   | "summary";
 
+export type ConversationMessage = {
+  role: "user" | "assistant";
+  content: string;
+};
+
 const STORAGE_KEY = "nova_school_assistant_db_v1";
 let SQL: SqlJsStatic | null = null;
 let database: Database | null = null;
@@ -108,7 +113,7 @@ const initializeSchema = (db: Database): void => {
   `);
 };
 
-const persistDatabase = (db: Database): void => {
+export const persistDatabase = (db: Database): void => {
   const bytes = db.export();
 
   try {
@@ -232,7 +237,7 @@ const seedDatabase = (db: Database): void => {
   classInfoInsert.free();
 };
 
-const openDatabase = async (): Promise<Database> => {
+export const openDatabase = async (): Promise<Database> => {
   if (database) {
     console.info('Nova local database already opened.');
     return database;
@@ -527,4 +532,68 @@ export const getDocuments = async (): Promise<DocumentRecord[]> => {
 
   statement.free();
   return docs;
+};
+
+export const addConversationMessage = async (
+  role: ConversationMessage["role"],
+  content: string
+): Promise<void> => {
+  const db = await openDatabase();
+  db.run("INSERT INTO conversations (role, content, created_at) VALUES (?, ?, ?);", [
+    role,
+    content,
+    new Date().toISOString(),
+  ]);
+  persistDatabase(db);
+};
+
+export const getConversationMessages = async (
+  limit = 4
+): Promise<ConversationMessage[]> => {
+  const db = await openDatabase();
+  const statement = db.prepare(
+    "SELECT role, content FROM conversations ORDER BY id DESC LIMIT ?;"
+  );
+  statement.bind([limit]);
+  const messages: ConversationMessage[] = [];
+
+  while (statement.step()) {
+    const row = statement.getAsObject();
+    messages.push({
+      role: row.role === "user" ? "user" : "assistant",
+      content: String(row.content),
+    });
+  }
+
+  statement.free();
+  return messages.reverse();
+};
+
+export const clearConversations = async (): Promise<void> => {
+  const db = await openDatabase();
+  db.run("DELETE FROM conversations;");
+  persistDatabase(db);
+};
+
+export const saveSummary = async (content: string): Promise<void> => {
+  const db = await openDatabase();
+  const embedding = await generateEmbedding(content);
+  db.run(
+    "INSERT INTO summaries (content, embedding, created_at) VALUES (?, ?, ?);",
+    [content, JSON.stringify(embedding), new Date().toISOString()]
+  );
+  const id = Number(db.exec("SELECT last_insert_rowid() AS id;")[0].values[0][0]);
+  await syncDocument("summary", id, content);
+  persistDatabase(db);
+};
+
+export const getLatestSummary = async (): Promise<string | null> => {
+  const db = await openDatabase();
+  const statement = db.prepare("SELECT content FROM summaries ORDER BY id DESC LIMIT 1;");
+  let result: string | null = null;
+  if (statement.step()) {
+    result = String(statement.getAsObject().content);
+  }
+  statement.free();
+  return result;
 };

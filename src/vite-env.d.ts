@@ -11,6 +11,7 @@ declare module "sql.js" {
   interface Statement {
     step(): boolean;
     getAsObject(): Record<string, SqlValue>;
+    bind(values?: SqlValue[]): void;
     run(values?: SqlValue[]): void;
     free(): void;
   }
