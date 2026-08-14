@@ -489,3 +489,42 @@ export const clearHomework = async (): Promise<void> => {
   await removeDocumentsByKind("homework");
   persistDatabase(db);
 };
+
+export type DocumentRecord = {
+  id: number;
+  kind: DocumentKind;
+  entityId: number | null;
+  content: string;
+  embedding: number[];
+  createdAt: string;
+};
+
+export const getDocuments = async (): Promise<DocumentRecord[]> => {
+  const db = await openDatabase();
+  const statement = db.prepare(
+    "SELECT id, kind, entity_id, content, embedding, created_at FROM documents ORDER BY id;"
+  );
+  const docs: DocumentRecord[] = [];
+
+  while (statement.step()) {
+    const row = statement.getAsObject();
+    let embedding: number[]
+    try {
+      embedding = JSON.parse(String(row.embedding))
+    } catch {
+      embedding = []
+    }
+
+    docs.push({
+      id: Number(row.id),
+      kind: row.kind as DocumentKind,
+      entityId: row.entity_id === null ? null : Number(row.entity_id),
+      content: String(row.content),
+      embedding,
+      createdAt: String(row.created_at),
+    });
+  }
+
+  statement.free();
+  return docs;
+};

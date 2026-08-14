@@ -8,7 +8,7 @@
 | Ítem | Estado |
 |---|---|
 | Plan | **APROBADO** (`REFACTOR_PLAN.md`) |
-| Implementación | **EN CURSO** (etapa 3: RAG) |
+| Implementación | **EN CURSO** (etapa 4: router semántico) |
 
 ## Etapas
 
@@ -17,8 +17,8 @@
 | 0 | Docs y scaffolding (`REFACTOR_PLAN.md`, `PLAN_PROGRESS.md`) | **COMPLETADA** | Docs en raíz; commit `fdf270a` |
 | 1 | Embeddings (interfaz + Gemini + Ollama + BM25) | **COMPLETADA** | `npm run build` OK; lint verde |
 | 2 | BD: migraciones + sync `documents` | **COMPLETADA** | Tablas creadas; escrituras actualizan docs; roundtrip verificado |
-| 3 | RAG: índice vectorial + retrieval | EN CURSO | `retrieve` devuelve top-K correcto |
-| 4 | Router semántico + slot filler | PENDIENTE | Frases naturales ES → (ACCIÓN, entidad) |
+| 3 | RAG: índice vectorial + retrieval | **COMPLETADA** | `retrieve` devuelve top-K correcto (verificado en corpus ES) |
+| 4 | Router semántico + slot filler | EN CURSO | Frases naturales ES → (ACCIÓN, entidad) |
 | 5 | Memoria: stateStore, ventana corta, summarizer, facts | PENDIENTE | Snapshot correcto; resumen a >8 turnos |
 | 6 | Ejecutores CRUD + confirmación de borrado | PENDIENTE | Confirmación borra/deniega correctamente |
 | 7 | Slim prompts + pipeline `useControls` | PENDIENTE | Sin duplicación de instrucciones |
@@ -30,7 +30,8 @@
 |---|---|---|---|---|
 | — | 0 | Creación del plan de refactor y del seguimiento | `fdf270a` | `REFACTOR_PLAN.md`, `PLAN_PROGRESS.md` |
 | 2026-08-13 | 1 | Embeddings: interfaz `generateEmbedding`, Gemini `text-embedding-004`, Ollama `/api/embeddings`, fallback BM25 en `rag/embeddings.ts`, helper en `ai/index.ts`. Bonus: se arreglaron 11 errores de lint pre-existentes para dejar lint verde | `cd76d67` | `src/lib/ai/providers.ts`, `gemini-provider.ts`, `ollama-provider.ts`, `index.ts`, `src/lib/rag/embeddings.ts`, `.env.example`, `STREAMING_VERIFICATION.ts`, `StreamingContext.tsx`, `useControlsStreaming.tsx`, `listen.ts`, `vite-env.d.ts` |
-| 2026-08-13 | 2 | BD: migraciones §7 (`conversations`, `summaries`, `facts`, `documents`) + `syncDocument`/`removeDocument`/`removeDocumentsByKind`; sync en `createGroupsBySize`, `addHomework`, `clearGroups`, `clearHomework`; roundtrip verificado en Node | — | `src/components/services/database.ts`, `src/vite-env.d.ts` |
+| 2026-08-13 | 2 | BD: migraciones §7 (`conversations`, `summaries`, `facts`, `documents`) + `syncDocument`/`removeDocument`/`removeDocumentsByKind`; sync en `createGroupsBySize`, `addHomework`, `clearGroups`, `clearHomework`; roundtrip verificado en Node | `7bc010a` | `src/components/services/database.ts`, `src/vite-env.d.ts` |
+| 2026-08-13 | 3 | RAG: `rag/index.ts` (coseno, índice en memoria, `searchIndex`) + `rag/retrieval.ts` (`retrieve`); lector `getDocuments` en `database.ts`; top-K verificado con corpus ES (tarea de física, tutor, grupos) | — | `src/lib/rag/index.ts`, `src/lib/rag/retrieval.ts`, `src/components/services/database.ts` |
 
 ## Check-list por etapa
 
@@ -57,10 +58,10 @@
 - [x] Commit `[feat]`
 
 ### Etapa 3 — RAG
-- [ ] `src/lib/rag/index.ts`: índice vectorial (upsert, delete, cache en memoria)
-- [ ] `src/lib/rag/retrieval.ts`: coseno + top-K
-- [ ] Prueba manual: `retrieve("¿qué tarea dejó el profe de física?")` devuelve la tarea de física
-- [ ] Commit `[feat]`
+- [x] `src/lib/rag/index.ts`: índice vectorial (upsert, delete, cache en memoria)
+- [x] `src/lib/rag/retrieval.ts`: coseno + top-K
+- [x] Prueba manual: `retrieve("¿qué tarea dejó el profe de física?")` devuelve la tarea de física (verificada en corpus ES)
+- [x] Commit `[feat]`
 
 ### Etapa 4 — Router semántico + slot filler
 - [ ] `src/lib/router/intents.ts`: prototipos (ver §9 del plan) con vectores de referencia ES
