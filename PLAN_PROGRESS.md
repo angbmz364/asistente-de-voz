@@ -8,7 +8,7 @@
 | Ítem | Estado |
 |---|---|
 | Plan | **APROBADO** (`REFACTOR_PLAN.md`) |
-| Implementación | **EN CURSO** (etapa 8: pruebas e integración) |
+| Implementación | **COMPLETADA** (faltan pruebas manuales de voz del usuario) |
 
 ## Etapas
 
@@ -22,7 +22,7 @@
 | 5 | Memoria: stateStore, ventana corta, summarizer, facts | **COMPLETADA** | Snapshot correcto (10 pruebas); ventana 4 turnos en `conversations`; resumen >8 turnos; reset por idle |
 | 6 | Ejecutores CRUD + confirmación de borrado | **COMPLETADA** | Confirmación borra/deniega correctamente (loop verificado) |
 | 7 | Slim prompts + pipeline `useControls` | **COMPLETADA** | Sin duplicación de instrucciones |
-| 8 | Pruebas: lint, build, voz manual ES | EN CURSO | Lint y build limpios |
+| 8 | Pruebas: lint, build, voz manual ES | **COMPLETADA*** | Lint y build limpios; voz manual pendiente del usuario |
 
 ## Registro de actividad
 
@@ -35,7 +35,8 @@
 | 2026-08-13 | 4 | Router semántico (`router/intents.ts` prototipos ES, `router/router.ts` coseno + umbral `VITE_ROUTER_THRESHOLD`) + slot filler (`router/slots.ts` LLM JSON + parser local sin acentos). 12 frases ES de prueba → intención correcta; "no olvides la tarea de historia para mañana" → ADD_HOMEWORK + {historia, manana} | `ebe544a` | `src/lib/router/intents.ts`, `src/lib/router/router.ts`, `src/lib/router/slots.ts` |
 | 2026-08-13 | 5 | Memoria: `memory/stateStore.ts` (snapshot determinista, tope 8, idle 30 min, pendingAction), rewrite `conversationStore.ts` (ventana 4 turnos persistida en tabla `conversations`), `memory/summarizer.ts` (resumen rodante >8 turnos en `summaries`), `memory/facts.ts` (pendientes embebidos en `documents`). Helpers BD: `openDatabase`/`persistDatabase` exportadas, conversaciones y resúmenes. Se corrigió uso de `bind` en SELECT con parámetros | `d00bf16` | `src/lib/memory/*`, `src/components/services/conversationStore.ts`, `database.ts`, `src/vite-env.d.ts` |
 | 2026-08-13 | 6 | Ejecutores CRUD ES (`executors/homework|groups|students|classFacts`) + dispatch `executors/index.ts` con loop de confirmación (`pendingAction` con `entityId`). Helpers BD: `deleteHomeworkById`, `addStudent`, `getStudentByName`, `deleteStudentById`, `syncDocument` para estudiantes. Captura de nombre en `slots.ts`. Loop verificado (pregunta → confirmar borra / denegar no borra) | `8912920` | `src/lib/memory/executors/*`, `src/lib/memory/stateStore.ts`, `database.ts`, `src/lib/router/slots.ts` |
-| 2026-08-13 | 7 | Prompts slim + pipeline: `ai/prompts.ts` (persona centralizada + context builder con presupuesto Gemini 5docs/4turnos vs Ollama 3docs/2turnos), `SYSTEM_PROMPT` único (se quitó de `gemini.ts`), sufijos duplicados eliminados en `gemini-provider.ts`, `instructionProcessor.ts` reescrito como adaptador (router → slots → ejecutor → RAG → prompt), `useControls.tsx` recableado con respuesta local o streaming (contrato intacto) | — | `src/lib/ai/prompts.ts`, `src/components/services/gemini.ts`, `src/lib/ai/gemini-provider.ts`, `src/components/services/instructionProcessor.ts`, `src/components/hooks/useControls.tsx` |
+| 2026-08-13 | 7 | Prompts slim + pipeline: `ai/prompts.ts` (persona centralizada + context builder con presupuesto Gemini 5docs/4turnos vs Ollama 3docs/2turnos), `SYSTEM_PROMPT` único (se quitó de `gemini.ts`), sufijos duplicados eliminados en `gemini-provider.ts`, `instructionProcessor.ts` reescrito como adaptador (router → slots → ejecutor → RAG → prompt), `useControls.tsx` recableado con respuesta local o streaming (contrato intacto) | `80a7bc3` | `src/lib/ai/prompts.ts`, `src/components/services/gemini.ts`, `src/lib/ai/gemini-provider.ts`, `src/components/services/instructionProcessor.ts`, `src/components/hooks/useControls.tsx` |
+| 2026-08-13 | 8 | Pruebas: `pnpm lint` ✅, `pnpm build` ✅; README actualizado a la arquitectura RAG + memoria (router semántico, executor con confirmación, ventana corta, resumen rodante). Prueba manual de voz ES queda a cargo del usuario | — | `README.md`, `PLAN_PROGRESS.md` |
 
 ## Check-list por etapa
 
@@ -96,8 +97,8 @@
 - [x] Commit `[refactor]`
 
 ### Etapa 8 — Pruebas e integración
-- [ ] `npm run lint`
-- [ ] `npm run build`
-- [ ] Prueba manual voz ES: agregar, borrar, consultar, explicar
-- [ ] Actualizar `README.md` si procede
-- [ ] Commit final `[chore]`
+- [x] `npm run lint` (verde)
+- [x] `npm run build` (verde)
+- [ ] Prueba manual voz ES: agregar, borrar, consultar, explicar (pendiente del usuario)
+- [x] Actualizar `README.md` (arquitectura RAG + memoria)
+- [x] Commit final `[chore]`

@@ -40,20 +40,30 @@ Voice Input
     ↓
 Speech-to-Text
     ↓
-Intent Detection
+Semantic Router (cosine vs prototypes)
     ↓
-Backend Logic
+Slot Filler (LLM JSON / local parser)
     ↓
-SQLite Database
+RAG retrieval (top-K by cosine)
     ↓
-Context Builder
+Local Executor (CRUD on SQLite, with delete confirmation)
     ↓
-Gemma
+Context Builder (state snapshot + docs + short window)
     ↓
-Natural Language Response
+LLM stream (Gemini / Ollama)
     ↓
 Text-to-Speech
 ```
+
+The LLM never mutates the database: only local executors write.
+
+### Memory
+
+- **Working memory**: deterministic snapshot (`stateStore`) persisted in `localStorage`: topic, important things (max 8), entities in play, pending deletion, recent intents.
+- **Short-term**: last 2-4 turns persisted in the `conversations` table.
+- **Long-term**: `facts` + rolling `summaries` + embedded classroom records (RAG).
+- Idle reset after 30 minutes of inactivity.
+- Destructive actions ask for voice confirmation before mutating.
 
 ---
 
@@ -67,27 +77,24 @@ Text-to-Speech
 
 ## Database Structure
 
-### Students
+SQLite via `sql.js`, persisted to `localStorage`.
 
-Stores classroom student information.
-
-```sql
-CREATE TABLE students (
-    id INTEGER PRIMARY KEY,
-    name TEXT NOT NULL
-);
-```
+- `students`, `class_info`, `groups`, `homework` — classroom records.
+- `conversations` — short-term window (role, content).
+- `summaries` — rolling conversation summaries.
+- `facts` — free-form pendings / reminders.
+- `documents` — **RAG source of truth**: fragmented, embedded projections of homework, groups, students, facts, summaries and class info, queried by cosine similarity.
 
 ### Homeworks
 
 Stores homework assignments.
 
 ```sql
-CREATE TABLE homeworks (
-    id INTEGER PRIMARY KEY,
-    subject TEXT NOT NULL,
+CREATE TABLE homework (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     description TEXT NOT NULL,
-    due_date TEXT
+    due_date TEXT,
+    created_at TEXT NOT NULL
 );
 ```
 
@@ -97,53 +104,54 @@ Stores generated student groups.
 
 ```sql
 CREATE TABLE groups (
-    id INTEGER PRIMARY KEY,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    members TEXT NOT NULL,
+    created_at TEXT NOT NULL
 );
 ```
 
-### Group Members
-
-Stores students assigned to groups.
+### Documents (RAG)
 
 ```sql
-CREATE TABLE group_members (
-    group_id INTEGER,
-    student_id INTEGER
+CREATE TABLE documents (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    kind TEXT NOT NULL,      -- homework | group | student | class_info | fact | summary
+    entity_id INTEGER,
+    content TEXT NOT NULL,
+    embedding TEXT NOT NULL,
+    created_at TEXT NOT NULL
 );
 ```
 
 ---
 
-## Context Injection Strategy
+## Context Injection Strategy (RAG)
 
 Nova does not send the entire database to the language model.
 
-Instead, the backend retrieves only the information needed for the current request.
+Instead it embeds the transcript once and retrieves the top-K `documents`
+by cosine similarity, then builds a thin prompt with a token budget:
+
+- **Gemini**: up to 5 docs + rolling summary + 4 turns.
+- **Ollama**: up to 3 docs + 2 turns.
+
+Embeddings come from the provider (Gemini `embedContent` / Ollama
+`/api/embeddings`); if unavailable, a local keyword (BM25-style) vector
+keeps the app working offline.
 
 Example:
 
 User request:
 
 ```text
-Nova, what homework do we have?
+Nova, ¿qué tarea dejó el profe de física?
 ```
 
-Backend query:
-
-```sql
-SELECT * FROM homeworks
-ORDER BY id DESC
-LIMIT 1;
-```
-
-Context sent to Gemma:
+RAG top-K:
 
 ```text
-Current homework:
-Physics
-Exercises 1-10
-Due Friday
+Tarea: resolver ejercicios del libro de física. Fecha de entrega: viernes
 ```
 
 This reduces:
@@ -160,24 +168,24 @@ This reduces:
 Teacher:
 
 ```text
-Nova, create groups of 5 students.
+Nova, haz grupos de 4.
 ```
 
-Backend:
+Pipeline:
 
-1. Detects intent
-2. Retrieves students
-3. Generates groups
-4. Stores groups
-5. Builds response context
+1. Semantic router detects `CREATE_GROUPS`
+2. Slot filler extracts group size (4)
+3. Executor generates and stores groups locally
+4. Nova answers directly, without the LLM
 
-Gemma:
+Deletions are confirmed by voice first:
 
 ```text
-The groups have been created successfully.
+Nova, borra la tarea de historia.
+Nova: ¿Confirmo que borro la tarea de historia?
+Teacher: Sí, confirmo.
 ```
-
-The language model never creates the groups itself.
+The language model never creates or mutates classroom data: only local executors do.
 
 ---
 
@@ -185,11 +193,13 @@ The language model never creates the groups itself.
 
 ### Current
 
-- Local database
-- Persistent memory
+- Local database (SQLite via sql.js, persisted in localStorage)
+- Persistent memory (stateStore + conversations + summaries + facts)
+- RAG context injection with offline BM25 fallback
+- Semantic intent router in Spanish
 - Educational assistant
-- Classroom administration
-- Local language model integration
+- Classroom administration with voice confirmation for destructive actions
+- Local and cloud language model integration
 
 ### Future
 
